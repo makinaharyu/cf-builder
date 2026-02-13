@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // HTML内のonclickから呼べるようにする
     window.closeMenu = closeSidebar;
+
+    // 初回ロード時にホーム画面を表示
+    resetHome();
 });
 
 // --- ページ切り替え機能 ---
@@ -72,10 +75,16 @@ function resetHome() {
     if(localInput) localInput.style.display = 'none'; // ホームではページ内検索を隠す
     
     const container = document.getElementById('data-container');
+    // ★ボタンを追加した初期画面
     container.innerHTML = `
         <div class="welcome-msg">
             <h3>クリスタル・フロンティア ルールブックへようこそ</h3>
             <p>左のメニューから項目を選択するか、サイドバーからキーワードを全検索してください。</p>
+            
+            <br>
+            <a href="https://crystalfrontier.github.io/cf-builder/" target="_blank" class="db-button">
+                カードデータベースを開く ↗
+            </a>
         </div>
     `;
     
