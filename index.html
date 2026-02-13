@@ -154,43 +154,44 @@
         /* =========================================
            ★スマホ対応 (画面幅768px以下で適用)
            ========================================= */
-        #mobile-nav { display: none; } /* PCでは隠す */
+        #mobile-nav { display: none; }
+        #filter-toggle-btn { display: none; } /* PCでは隠す */
+        #advanced-filters { display: grid; } /* PCでは常に表示 */
 
         @media (max-width: 768px) {
-            /* レイアウトを縦並びに変更 */
-            .screen { flex-direction: column; height: calc(100vh - 50px); } /* 下部バーの分を空ける */
+            .screen { flex-direction: column; height: calc(100vh - 50px); }
             
-            /* 左右パネルを強制的に全画面化 */
             .left-pane, .right-pane { 
-                width: 100% !important; 
-                max-width: 100% !important;
-                height: 100%; 
-                display: none; /* 一旦両方隠す */
+                width: 100% !important; max-width: 100% !important; height: 100%; display: none; padding: 5px;
             }
-            
-            /* active-pane クラスがついている方だけ表示 */
             .left-pane.active-pane, .right-pane.active-pane { display: flex; }
-
-            /* 仕切り線はスマホでは不要 */
             .gutter { display: none !important; }
 
-            /* ホバープレビューは邪魔になるので調整 */
-            #hover-preview { 
-                width: 80vw; height: auto; 
-                top: 50% !important; left: 50% !important; 
-                transform: translate(-50%, -50%);
-                pointer-events: none;
+            /* ★変更: 詳細フィルタを最初は隠す */
+            #advanced-filters { display: none; border-top: none; margin-top: -5px; }
+            
+            /* ★追加: フィルタ開閉ボタン */
+            #filter-toggle-btn {
+                display: block; width: 100%; padding: 8px; margin-bottom: 5px;
+                background: #21262d; border: 1px solid #30363d; color: #8b949e;
+                cursor: pointer; font-size: 12px; font-weight: bold; border-radius: 4px;
             }
+            #filter-toggle-btn:hover { background: #30363d; color: #fff; }
 
-            /* 下部ナビゲーションバー */
+            /* ホバープレビュー調整 */
+            #hover-preview { 
+                width: 70vw; height: auto; 
+                top: 50% !important; left: 50% !important; 
+                transform: translate(-50%, -50%); pointer-events: none;
+            }
+            /* 下部ナビ */
             #mobile-nav {
                 display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 50px;
                 background: #161b22; border-top: 1px solid #30363d; z-index: 2000;
             }
             .nav-btn {
-                flex: 1; border: none; background: none; color: #8b949e;
-                font-weight: bold; cursor: pointer; border-right: 1px solid #30363d;
-                font-size: 14px;
+                flex: 1; border: none; background: none; color: #8b949e; font-weight: bold;
+                cursor: pointer; border-right: 1px solid #30363d; font-size: 14px;
             }
             .nav-btn:last-child { border-right: none; }
             .nav-btn.active { background: #1f6feb; color: #fff; }
@@ -211,10 +212,13 @@
 
     <div id="screen-builder" class="screen active">
         <div class="left-pane" id="pane-l-build">
-            <div class="filter-grid">
-                <label>テキスト検索 (名前・タイプ・効果)</label>
-                <input type="text" id="q-text" placeholder="キーワード・読み(ひらがな)を入力..." oninput="filterCards()" style="grid-column: span 2;">
-                
+            <div class="filter-grid" style="margin-bottom: 5px; grid-template-columns: 1fr;">
+                <input type="text" id="q-text" placeholder="キーワード・読み(ひらがな)を入力..." oninput="filterCards()" style="width:100%;">
+            </div>
+
+            <button id="filter-toggle-btn" onclick="toggleFilters()">▼ 詳細条件を指定する</button>
+
+            <div class="filter-grid" id="advanced-filters">
                 <label>分類 (複数選択可)</label>
                 <div class="check-group" id="grp-cat">
                     <label class="check-label"><input type="checkbox" value="01ユニット" onchange="filterCards()"> ユニット</label>
@@ -265,6 +269,7 @@
                     </select>
                 </div>
             </div>
+            
             <div id="search-results"></div>
         </div>
         <div class="gutter" id="gutter-build"></div>
@@ -367,6 +372,29 @@
                 right.classList.add('active-pane');
                 btnSearch.classList.remove('active');
                 btnDeck.classList.add('active');
+            }
+        }
+
+        // ★追加: フィルタ開閉ボタンの動作
+        function toggleFilters() {
+            const area = document.getElementById('advanced-filters');
+            const btn = document.getElementById('filter-toggle-btn');
+            
+            // 現在の display スタイルを確認（noneなら閉じてる）
+            const isClosed = window.getComputedStyle(area).display === 'none';
+            
+            if (isClosed) {
+                // 開く処理
+                area.style.display = 'grid';
+                btn.textContent = '▲ 詳細条件を閉じる';
+                btn.style.background = '#30363d';
+                btn.style.color = '#fff';
+            } else {
+                // 閉じる処理
+                area.style.display = 'none';
+                btn.textContent = '▼ 詳細条件を指定する';
+                btn.style.background = '#21262d';
+                btn.style.color = '#8b949e';
             }
         }
 
