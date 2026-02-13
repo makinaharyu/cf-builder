@@ -7,313 +7,195 @@
     <title>デッキビルダー | クリフロ-Crystal Frontier-</title>
     <style>
         /* =========================================
-           ★カスタマイズエリア (見た目の設定)
+           ★集中カスタマイズエリア (CSSデザイン)
            ========================================= */
         :root {
-            --card-w: 110px;
-            --card-h: 154px;
-            --bg: #0d1117;
-            --panel: #161b22;
-            --accent: #f1c40f; /* 金色 */
-            --text: #c9d1d9;
-            --border: #30363d;
-            --green: #238636;
-            --red: #f85149;
-            --blue: #1f6feb;
+            /* 基本カラー */
+            --bg: #0d1117;          /* 全体の背景色 */
+            --panel: #161b22;       /* パネルの背景色 */
+            --accent: #f1c40f;      /* アクセントカラー（金） */
+            --text: #c9d1d9;        /* 通常文字色 */
+            --border: #30363d;      /* 枠線の色 */
+
+            /* 状態カラー */
+            --green: #238636;       /* 追加ボタン・成功色 */
+            --red: #f85149;         /* 削除ボタン・警告色 */
+            --blue: #1f6feb;        /* 選択中・情報色 */
+            
+            /* カード表示設定 */
+            --card-w: 110px;        /* カードの横幅(PC) */
+            --card-h: 154px;        /* カードの縦幅(PC) */
+            --card-radius: 6px;     /* カードの角丸 */
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.5); /* カードの影 */
+            
+            /* 演出・その他 */
+            --anim-speed: 0.3s;     /* アニメーションの速度 */
+            --glass-bg: rgba(22, 27, 34, 0.8); /* 半透明パネルの背景 */
         }
 
-        /* 全体設定 */
+        /* -----------------------------------------
+           以下、システムスタイル（変更不要）
+           ----------------------------------------- */
         body { 
-            font-family: "Helvetica Neue", Arial, sans-serif; 
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", sans-serif; 
             background: var(--bg); color: var(--text); 
             margin: 0; padding: 0; overflow: hidden; font-size: 13px;
-            touch-action: manipulation; 
-            width: 100%;
-            height: 100dvh;
+            touch-action: manipulation; width: 100%; height: 100dvh;
         }
         
-        /* レイアウト */
-        .screen { 
-            display: none; 
-            height: 100dvh; 
-            width: 100%; 
-            flex-direction: row; 
-        }
+        .screen { display: none; height: 100dvh; width: 100%; flex-direction: row; }
         .active { display: flex; }
         
-        /* 左パネル */
         .left-pane { 
-            width: 450px; 
-            min-width: 250px; 
-            max-width: 80vw;
-            border-right: none;
-            padding: 10px; 
-            display: flex; 
-            flex-direction: column; 
-            box-sizing: border-box; 
-            flex-shrink: 0; 
+            width: 450px; min-width: 280px; max-width: 80vw;
+            padding: 10px; display: flex; flex-direction: column; box-sizing: border-box; flex-shrink: 0; 
         }
 
-        /* 仕切り線 */
         .gutter {
-            width: 8px;
-            background: #21262d;
-            cursor: col-resize;
-            border-left: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-            transition: background 0.2s;
-            flex-shrink: 0;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 8px; background: #21262d; cursor: col-resize;
+            border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+            transition: background 0.2s; flex-shrink: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
         }
         .gutter:hover, .gutter.dragging { background: var(--accent); }
         .gutter::after { content: "||"; color: #555; font-size: 9px; letter-spacing: -1px; }
 
-        /* 右パネル */
         .right-pane { 
-            flex-grow: 1; 
-            min-width: 0;
-            padding: 10px; 
-            display: flex; 
-            flex-direction: column; 
-            box-sizing: border-box; 
-            background: #0d1117; 
+            flex-grow: 1; min-width: 0; padding: 10px; 
+            display: flex; flex-direction: column; box-sizing: border-box; background: var(--bg); 
         }
         
-        /* 検索・フィルター部分 */
-        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; background: var(--panel); padding: 8px; border-radius: 6px; border: 1px solid var(--border); }
-        .filter-grid label { grid-column: span 2; font-size: 10px; color: var(--accent); margin-top: 2px; font-weight: bold; }
-        input, select, textarea { background: #0d1117; color: #fff; border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; font-size: 12px; height: 26px; box-sizing: border-box; }
-        textarea { width: 100%; height: 80px; resize: none; margin-bottom: 10px; }
-        .range-box { display: flex; align-items: center; gap: 3px; }
+        .filter-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; 
+            background: var(--panel); padding: 10px; border-radius: 8px; border: 1px solid var(--border); 
+        }
+        .filter-grid label { grid-column: span 2; font-size: 10px; color: var(--accent); margin-top: 4px; font-weight: bold; text-transform: uppercase; }
+        
+        input, select, textarea { 
+            background: #0d1117; color: #fff; border: 1px solid var(--border); 
+            padding: 4px 8px; border-radius: 4px; font-size: 12px; height: 30px; box-sizing: border-box; 
+        }
+        textarea { width: 100%; height: 80px; resize: none; margin-bottom: 10px; padding: 8px; }
+        .range-box { display: flex; align-items: center; gap: 4px; }
         .range-box input { width: 100%; }
 
-        /* チェックボックス設定 */
         .check-group { display: flex; flex-wrap: wrap; gap: 4px; grid-column: span 2; margin-bottom: 4px; }
         .check-label {
             display: inline-block; cursor: pointer; font-size: 11px;
             background: #21262d; border: 1px solid var(--border);
-            padding: 3px 8px; border-radius: 4px; color: var(--text); user-select: none; transition: 0.2s;
-            touch-action: manipulation;
+            padding: 4px 10px; border-radius: 4px; color: var(--text); user-select: none; transition: 0.2s;
         }
         .check-label input { display: none; } 
         .check-label:has(input:checked) { background: var(--blue); color: #fff; border-color: var(--blue); }
 
-        /* スクロールエリア */
-        #search-results { 
-            flex-grow: 1; overflow-y: auto; overflow-x: hidden; 
-            background: #000; border: 1px solid var(--border); 
-        }
+        #search-results { flex-grow: 1; overflow-y: auto; background: #000; border: 1px solid var(--border); border-radius: 4px; }
         #deck-list { 
-            flex-grow: 1; overflow-y: auto; overflow-x: hidden; 
-            background: #000; padding: 10px; 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, var(--card-w)); 
+            flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; 
+            display: grid; grid-template-columns: repeat(auto-fill, var(--card-w)); 
             gap: 12px; align-content: start; 
         }
-        #play-area { flex-grow: 1; overflow-y: auto; overflow-x: hidden; background: #0a2012; border-radius: 8px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px; padding: 20px; }
+        #play-area { flex-grow: 1; overflow-y: auto; background: radial-gradient(circle, #0a2012 0%, #000 100%); border-radius: 8px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px; padding: 20px; }
 
-        /* カード一覧のレイアウト */
-        .card-row { display: flex; padding: 6px; border-bottom: 1px solid var(--border); gap: 8px; background: #161b22; align-items: flex-start; }
-        .card-row:hover { background: #21262d; }
+        /* カード行のスタイル */
+        .card-row { display: flex; padding: 8px; border-bottom: 1px solid var(--border); gap: 10px; background: #161b22; align-items: flex-start; transition: 0.1s; }
+        .card-row:hover { background: #1c2128; }
         
-        .img-box { width: 50px; height: 70px; background: #222; border: 1px solid #444; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
-        .img-box img { width: 100%; height: 100%; object-fit: contain; }
-        
-        .card-info { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-        
-        .info-header { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; margin-bottom: 2px; min-width: 0; }
-        
-        /* カード名エリア */
-        .card-name { 
-            font-weight: bold; color: #fff; font-size: 14px; margin-bottom: 2px; 
-            width: 100%; overflow-x: auto; white-space: nowrap; 
-            scrollbar-width: none; -ms-overflow-style: none;
+        .img-box { 
+            width: 50px; height: 70px; background: #222; border: 1px solid #444; border-radius: 4px;
+            flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden;
         }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .card-info { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .card-name { font-weight: bold; color: #fff; font-size: 14px; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
         .card-name::-webkit-scrollbar { display: none; }
         
-        /* 属性・数値エリア全体 */
-        .card-sub { 
-            font-size: 11px; color: #8b949e; 
-            display: flex; align-items: center; 
-            width: 100%; overflow: hidden; 
-        }
-        
-        .stat-emphasis {
-            font-family: "Impact", "Arial Black", sans-serif;
-            font-size: 15px; color: #fff; letter-spacing: 0.5px;
-            flex-shrink: 0; 
-        }
+        .card-sub { font-size: 11px; color: #8b949e; display: flex; align-items: center; width: 100%; overflow: hidden; }
+        .stat-emphasis { font-family: "Impact", sans-serif; font-size: 16px; color: #fff; letter-spacing: 0.5px; flex-shrink: 0; }
+        .info-scroll-area { flex-grow: 1; overflow-x: auto; white-space: nowrap; scrollbar-width: none; margin-left: 6px; }
 
-        /* タイプ情報のスクロールエリア */
-        .info-scroll-area {
-            flex-grow: 1; overflow-x: auto; white-space: nowrap;
-            scrollbar-width: none; -ms-overflow-style: none;
-            margin-left: 4px;
-        }
-        .info-scroll-area::-webkit-scrollbar { display: none; }
-
-        /* 効果テキストエリア */
         .card-effect {
-            font-size: 11px; color: #ccc; line-height: 1.4;
-            background: rgba(0,0,0,0.3); padding: 4px; border-radius: 4px;
-            max-height: 48px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #30363d;
-        }
-        .card-effect::-webkit-scrollbar { width: 4px; }
-        .card-effect::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
-
-        .inline-icon { height: 1.1em; width: auto; vertical-align: text-bottom; margin: 0 1px; display: inline-block; }
-        
-        /* 検索結果の追加ボタン */
-        .btn-add { 
-            height: 100%; align-self: center; touch-action: manipulation; 
-            flex-shrink: 0; /* 横幅を勝手に縮めさせない */
+            font-size: 11px; color: #d1d5da; line-height: 1.5;
+            background: rgba(0,0,0,0.4); padding: 6px; border-radius: 4px;
+            max-height: 54px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #30363d;
         }
 
-        /* デッキ内カードのコントロール */
-        .deck-item { position: relative; width: var(--card-w); height: var(--card-h); cursor: pointer; }
-        .deck-item img { 
-            width: 100%; height: 100%; 
-            border: 1px solid #fff; border-radius: 4px; object-fit: cover; transition: 0.1s;
-            touch-action: manipulation;
-        }
-        .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: #fff; width: 22px; height: 22px; line-height: 22px; border-radius: 50%; font-weight: bold; text-align: center; border: 2px solid #fff; z-index: 10; font-size: 11px; pointer-events: none; }
+        .inline-icon { height: 1.2em; width: auto; vertical-align: middle; margin: 0 1px; }
         
-        /* PC/スマホ共通：画像下のボタン */
+        /* ボタン類 */
+        .btn-add { width: 44px; height: 100%; align-self: stretch; font-size: 20px; flex-shrink: 0; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: #fff; font-size: 12px; transition: filter 0.2s; }
+        .btn:active { filter: brightness(0.8); }
+        .btn-green { background: var(--green); } .btn-blue { background: var(--blue); } .btn-accent { background: var(--accent); color: #000; } .btn-red { background: var(--red); }
+
+        /* デッキ内カード */
+        .deck-item { position: relative; width: var(--card-w); height: var(--card-h); box-shadow: var(--card-shadow); }
+        .deck-item img { width: 100%; height: 100%; border: 1px solid #fff; border-radius: var(--card-radius); object-fit: cover; }
+        .badge { 
+            position: absolute; top: -8px; right: -8px; background: var(--red); color: #fff; 
+            width: 24px; height: 24px; line-height: 24px; border-radius: 50%; 
+            font-weight: bold; text-align: center; border: 2px solid #fff; z-index: 10; font-size: 12px; 
+        }
+        
         .deck-controls {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 30px; z-index: 20;
-            border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; overflow: hidden;
-            display: flex;
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 32px; z-index: 20;
+            border-radius: 0 0 var(--card-radius) var(--card-radius); overflow: hidden; display: flex;
         }
-        .ctrl-btn {
-            width: 50%; height: 100%; border: none; color: #fff; font-weight: bold; font-size: 16px; cursor: pointer; padding: 0; margin: 0;
-            touch-action: manipulation;
-        }
-        .ctrl-btn.minus { background: rgba(200, 50, 50, 0.8); }
-        .ctrl-btn.plus { background: rgba(50, 200, 50, 0.8); }
+        .ctrl-btn { width: 50%; height: 100%; border: none; color: #fff; font-weight: bold; font-size: 18px; cursor: pointer; }
+        .ctrl-btn.minus { background: rgba(200, 50, 50, 0.9); }
+        .ctrl-btn.plus { background: rgba(50, 200, 50, 0.9); }
 
-        .play-card { width: 120px; height: 168px; border: 2px solid #fff; border-radius: 6px; background: #000; animation: drawAnim 0.3s ease-out; cursor: help; touch-action: manipulation; }
+        .play-card { width: 120px; height: 168px; border: 2px solid #fff; border-radius: 8px; background: #000; animation: drawAnim var(--anim-speed) ease-out; cursor: help; }
         
+        /* プレビュー */
         #hover-preview { 
             position: fixed; z-index: 9999; pointer-events: none; display: none; 
-            background: #000; border: 3px solid var(--accent); border-radius: 10px; 
-            box-shadow: 0 0 30px rgba(0,0,0,0.9); width: 320px; height: 448px; 
-            overflow: hidden; transition: opacity 0.3s; 
+            background: #000; border: 3px solid var(--accent); border-radius: 12px; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.8); width: 320px; height: 448px; overflow: hidden; 
         }
         #hover-preview img { width: 100%; height: 100%; object-fit: contain; }
-        #preview-close-btn {
-            display: none; position: absolute; top: 5px; left: 5px; z-index: 10000;
-            width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.8);
-            color: #000; font-weight: bold; font-size: 20px; border: 2px solid #000;
-            cursor: pointer; align-items: center; justify-content: center;
-        }
         
-        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: #fff; font-size: 12px; touch-action: manipulation; }
-        .btn-green { background: var(--green); } .btn-blue { background: var(--blue); } .btn-accent { background: var(--accent); color: #000; } .btn-red { background: var(--red); }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        @keyframes drawAnim { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        @keyframes drawAnim { from { transform: translateY(30px) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 
-        /* =========================================
-           ★スマホ対応 (画面幅768px以下で適用)
-           ========================================= */
-        #mobile-nav { display: none; }
-        #filter-toggle-btn { display: none; }
-        #advanced-filters { display: grid; }
-
+        /* スマホ対応 */
         @media (max-width: 768px) {
-            .pc-only-text { display: none !important; }
-
-            :root {
-                --card-w: 75px;  
-                --card-h: 105px;
-            }
-            .play-card { width: 75px; height: 105px; }
-
-            .screen { 
-                flex-direction: column; 
-                height: calc(100dvh - 50px); 
-            }
-            
-            .left-pane, .right-pane { 
-                width: 100% !important; max-width: 100% !important; 
-                height: 100%; 
-                display: none; 
-                padding: 15px 5px 5px 5px; 
-                padding-top: calc(10px + env(safe-area-inset-top, 0px)); 
-                box-sizing: border-box;
-            }
-            .left-pane.active-pane, .right-pane.active-pane { display: flex; }
-            .gutter { display: none !important; }
-
-            #advanced-filters { display: none; border-top: none; margin-top: -5px; }
-            #filter-toggle-btn {
-                display: block; width: 100%; padding: 8px; margin-bottom: 5px;
-                background: #21262d; border: 1px solid #30363d; color: #8b949e;
-                cursor: pointer; font-size: 12px; font-weight: bold; border-radius: 4px;
-            }
-
-            .btn-add {
-                width: 40px; /* 横幅を少し抑える */
-                font-size: 24px; align-self: stretch;
-                display: flex; align-items: center; justify-content: center; margin-left: 2px;
-                flex-shrink: 0;
-            }
-
-            #hover-preview { 
-                display: none; 
-                width: 100vw !important; height: 100dvh !important; 
-                top: 0 !important; left: 0 !important; border: none; border-radius: 0;
-                transform: none; pointer-events: auto !important;
-                background: rgba(0,0,0,0.85);
-                align-items: center; justify-content: center;
-                z-index: 9999;
-            }
-            
-            #mobile-nav {
-                display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 50px;
-                background: #161b22; border-top: 1px solid #30363d; z-index: 2000;
-                padding-bottom: env(safe-area-inset-bottom, 0px); 
-            }
-            .nav-btn {
-                flex: 1; border: none; background: none; color: #8b949e; font-weight: bold;
-                cursor: pointer; border-right: 1px solid #30363d; font-size: 13px;
-                touch-action: manipulation;
-                display: flex; align-items: center; justify-content: center;
-                text-align: center; transition: all 0.2s ease;
-            }
-            .nav-btn.active { 
-                background: #1f6feb; color: #fff; 
-                font-size: 15px; /* アクティブ時に少し大きく */
-            }
+            :root { --card-w: 80px; --card-h: 112px; }
+            .left-pane, .right-pane { width: 100% !important; max-width: 100% !important; display: none; }
+            .active-pane { display: flex; }
+            .gutter { display: none; }
+            #mobile-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: var(--panel); border-top: 1px solid var(--border); z-index: 3000; padding-bottom: env(safe-area-inset-bottom); }
+            .nav-btn { flex: 1; border: none; background: none; color: #8b949e; font-weight: bold; font-size: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+            .nav-btn.active { color: var(--accent); background: rgba(255,255,255,0.05); }
         }
     </style>
 </head>
 <body>
     <div id="hover-preview" onclick="closePreviewMobile()">
-        <img id="preview-img" src="" onclick="event.stopPropagation()"> <div id="preview-close-btn" onclick="closePreviewMobile()">×</div>
+        <img id="preview-img" src="">
+        <div id="preview-close-btn" style="display:none; position:absolute; top:10px; right:10px; width:40px; height:40px; background:rgba(0,0,0,0.5); color:#fff; border-radius:50%; align-items:center; justify-content:center; font-size:24px;">×</div>
     </div>
     
     <div id="file-overlay" class="overlay" style="display: none;">
         <h2 style="color:var(--accent);">Crystal Frontier System</h2>
+        <p>カードリスト(CSV)を選択してください</p>
         <input type="file" id="csv-file" accept=".csv" style="margin-bottom: 20px;">
         <div style="display: flex; gap: 10px;">
-            <button class="btn btn-green" onclick="loadFile('UTF-8')">UTF-8(推奨)</button>
-            <button class="btn btn-blue" onclick="loadFile('Shift-JIS')">Shift-JIS(Excel用)</button>
+            <button class="btn btn-green" onclick="loadFile('UTF-8')">UTF-8で読み込み</button>
+            <button class="btn btn-blue" onclick="loadFile('Shift-JIS')">Shift-JISで読み込み</button>
         </div>
     </div>
 
     <div id="screen-builder" class="screen active">
         <div class="left-pane" id="pane-l-build">
             <div class="filter-grid" style="margin-bottom: 5px; grid-template-columns: 1fr;">
-                <input type="text" id="q-text" placeholder="キーワード・読み(ひらがな)を入力..." oninput="filterCards()" style="width:100%;">
+                <input type="text" id="q-text" placeholder="カード名、読み、効果で検索..." oninput="filterCards()">
             </div>
 
-            <button id="filter-toggle-btn" onclick="toggleFilters()">▼ 詳細条件を指定する</button>
+            <button id="filter-toggle-btn" style="width:100%; padding:10px; margin-bottom:5px; background:#21262d; border:1px solid #30363d; color:#8b949e; border-radius:4px; cursor:pointer;" onclick="toggleFilters()">▼ 詳細フィルターを表示</button>
 
-            <div class="filter-grid" id="advanced-filters">
-                <label>分類 (複数選択可)</label>
+            <div class="filter-grid" id="advanced-filters" style="display:none;">
+                <label>分類</label>
                 <div class="check-group" id="grp-cat">
                     <label class="check-label"><input type="checkbox" value="ユニット" onchange="filterCards()"> ユニット</label>
                     <label class="check-label"><input type="checkbox" value="マジック" onchange="filterCards()"> マジック</label>
@@ -322,7 +204,7 @@
                     <label class="check-label"><input type="checkbox" value="オルガノン" onchange="filterCards()"> オルガノン</label>
                 </div>
 
-                <label>色 (複数選択可)</label>
+                <label>属性/色</label>
                 <div class="check-group" id="grp-col">
                     <label class="check-label"><input type="checkbox" value="赤" onchange="filterCards()"> 赤</label>
                     <label class="check-label"><input type="checkbox" value="緑" onchange="filterCards()"> 緑</label>
@@ -330,190 +212,310 @@
                     <label class="check-label"><input type="checkbox" value="白" onchange="filterCards()"> 白</label>
                     <label class="check-label"><input type="checkbox" value="黒" onchange="filterCards()"> 黒</label>
                     <label class="check-label"><input type="checkbox" value="無" onchange="filterCards()"> 無</label>
-                    <label class="check-label"><input type="checkbox" value="多" onchange="filterCards()"> 多</label>
                 </div>
 
-                <label>コスト</label>
+                <label>コスト範囲</label>
                 <div class="range-box">
                     <input type="number" id="q-cost-min" placeholder="0" oninput="filterCards()">
                     <span>~</span>
-                    <input type="number" id="q-cost-max" placeholder="∞" oninput="filterCards()">
+                    <input type="number" id="q-cost-max" placeholder="MAX" oninput="filterCards()">
                 </div>
-                
-                <label>レアリティ (複数選択可)</label>
-                <div class="check-group" id="grp-rare">
-                    <label class="check-label"><input type="checkbox" value="コモン" onchange="filterCards()"> C</label>
-                    <label class="check-label"><input type="checkbox" value="アンコモン" onchange="filterCards()"> UC</label>
-                    <label class="check-label"><input type="checkbox" value="レア" onchange="filterCards()"> R</label>
-                    <label class="check-label"><input type="checkbox" value="レジェンド" onchange="filterCards()"> L</label>
-                </div>
-                
-                <label>ATK / HP</label>
-                <div class="range-box"><input type="number" id="q-atk-min" placeholder="0" oninput="filterCards()"><span>~</span><input type="number" id="q-atk-max" placeholder="∞" oninput="filterCards()"></div>
-                <div class="range-box"><input type="number" id="q-hp-min" placeholder="0" oninput="filterCards()"><span>~</span><input type="number" id="q-hp-max" placeholder="∞" oninput="filterCards()"></div>
                 
                 <label>並び替え</label>
                 <div style="grid-column: span 2; display: flex; gap: 5px;">
                     <select id="q-sort-key" onchange="filterCards()" style="flex: 2;">
-                        <option value="id">ID (登録順)</option>
-                        <option value="name">名前 (あいうえお順)</option>
-                        <option value="costTotal">コスト</option>
-                        <option value="atk">ATK (攻撃力)</option>
-                        <option value="hp">HP (体力)</option>
+                        <option value="id">登録順</option>
+                        <option value="name">五十音順</option>
+                        <option value="costTotal">コスト順</option>
+                        <option value="atk">ATK順</option>
+                        <option value="hp">HP順</option>
                     </select>
                     <select id="q-sort-dir" onchange="filterCards()" style="flex: 1;">
-                        <option value="1">昇順 (▲)</option>
-                        <option value="-1">降順 (▼)</option>
+                        <option value="1">昇順</option>
+                        <option value="-1">降順</option>
                     </select>
                 </div>
             </div>
             
             <div id="search-results"></div>
         </div>
+
         <div class="gutter" id="gutter-build"></div>
         
         <div class="right-pane">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-                <h3 style="margin:0;">Deck: <span id="total-count" style="color:var(--accent);">0</span>枚</h3>
-                <div class="pc-only-text" style="font-size:10px; color:#aaa;">(画像クリック:追加 / 右クリック:削除)</div>
-                <button class="btn btn-accent" onclick="switchToMulligan()">一人回し ➔</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                <h3 style="margin:0;">Deck: <span id="total-count" style="color:var(--accent);">0</span></h3>
+                <button class="btn btn-accent" onclick="switchToMulligan()">一人回しテスト ➔</button>
             </div>
             <div id="deck-list"></div>
             <div style="margin-top:10px; display:flex; gap:10px;">
-                <button class="btn btn-blue" onclick="copyRecipe()">📋 コピー</button>
-                <button class="btn btn-red" onclick="if(confirm('Reset?')){myDeck=[];renderDeck();}">Clear</button>
+                <button class="btn btn-blue" style="flex:1;" onclick="copyRecipe()">📋 レシピをコピー</button>
+                <button class="btn btn-red" onclick="if(confirm('デッキを空にしますか？')){myDeck=[];renderDeck();}">消去</button>
             </div>
         </div>
     </div>
 
     <div id="screen-mulligan" class="screen">
         <div class="left-pane" id="pane-l-mulligan">
-            <button class="btn btn-blue" onclick="switchToBuilder()" style="margin-bottom:10px;">↞ 構築へ戻る</button>
-            <textarea id="manual-input" placeholder="Name x4..."></textarea>
-            <div style="display: flex; gap: 5px; margin-bottom:10px;">
-                <button class="btn btn-green" style="flex:1" onclick="applyManualList()">適用</button>
-                <button class="btn btn-blue" onclick="document.getElementById('recipe-upload').click()">読込</button>
-                <input type="file" id="recipe-upload" accept=".txt" style="display:none;" onchange="handleRecipeUpload(event)">
+            <button class="btn btn-blue" onclick="switchToBuilder()" style="margin-bottom:15px;">↞ 構築画面へ戻る</button>
+            <label style="font-size:10px; color:var(--accent); font-weight:bold;">DECK LIST (編集可)</label>
+            <textarea id="manual-input" placeholder="カード名 x枚数..."></textarea>
+            <div style="display: flex; gap: 5px; margin-bottom:15px;">
+                <button class="btn btn-green" style="flex:1" onclick="applyManualList()">リストを適用</button>
             </div>
             <div class="filter-grid">
-                <label>設定</label>
-                初手枚数: <input type="number" id="hand-size" value="7" min="5" max="10">
+                <label>シミュレーター設定</label>
+                初手枚数: <input type="number" id="hand-size-input" value="7">
                 <button class="btn btn-accent" style="grid-column:span 2; margin-top:10px;" onclick="initSim()">山札をシャッフルして開始</button>
             </div>
         </div>
         <div class="gutter" id="gutter-mulligan"></div>
-
         <div class="right-pane">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-                <h3 style="margin:0;">Mulligan: 山札 <span id="sim-deck-count" style="color:var(--accent);">0</span>枚</h3>
-                <button class="btn btn-green" onclick="drawOne()">ドロー</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                <h3 style="margin:0;">Hand / Field (山札: <span id="sim-deck-count" style="color:var(--accent);">0</span>)</h3>
+                <button class="btn btn-green" onclick="drawOne()">1枚引く</button>
             </div>
             <div id="play-area"></div>
         </div>
     </div>
 
     <div id="mobile-nav">
-        <button class="nav-btn active" id="btn-search" onclick="showMobilePane('left')">🔍 検索 / 設定</button>
-        <button class="nav-btn" id="btn-deck" onclick="showMobilePane('right')">🃏 デッキ / プレイ</button>
+        <button class="nav-btn active" id="btn-search" onclick="showMobilePane('left')">🔍 検索・条件</button>
+        <button class="nav-btn" id="btn-deck" onclick="showMobilePane('right')">🃏 デッキ・操作</button>
     </div>
 
     <script>
+        /* =========================================
+           ★集中カスタマイズエリア (JSシステム設定)
+           ========================================= */
         const CONFIG = {
-            maxCardsInDeck: 4,
-            defaultHandSize: 7,
-            defaultCostMax: 999,
-            defaultStatMax: 99999
+            // ゲームルール設定
+            maxCardsPerName: 4,      /* 同名カードの最大枚数 */
+            defaultHandSize: 7,      /* デプロイ時の初期手札 */
+            minDeckSize: 40,         /* (参考) 推奨デッキ枚数 */
+
+            // パス・ファイル設定
+            csvPath: 'card_list.csv',      /* 読み込むCSVのファイル名 */
+            imageDir: 'images/',           /* カード画像のフォルダパス */
+            iconDir: 'images/icons/',      /* 効果テキスト内のアイコンフォルダパス */
+            noImage: 'https://via.placeholder.com/110x154?text=No+Image', /* 画像がない時の代替 */
+
+            // プレビュー設定
+            previewDelay: 300,       /* PCでホバーしてから表示されるまでの時間(ms) */
+            
+            // 数値の最大値設定（フィルター用）
+            limit: {
+                cost: 99,
+                atk: 99999,
+                hp: 99999
+            }
         };
 
+        /* -----------------------------------------
+           システム変数
+           ----------------------------------------- */
         let MASTER_DB = [], myDeck = [], simDeck = [], hoverTimer = null;
         const isMobile = () => window.innerWidth <= 768;
 
+        /* -----------------------------------------
+           初期化
+           ----------------------------------------- */
         window.addEventListener('DOMContentLoaded', () => {
+            // リサイズ機能の有効化
             setupResizer('pane-l-build', 'gutter-build');
             setupResizer('pane-l-mulligan', 'gutter-mulligan');
-            showMobilePane('left'); 
-
-            fetch('card_list.csv')
-                .then(response => {
-                    if (!response.ok) throw new Error("CSVが見つかりません");
-                    return response.text();
-                })
-                .then(text => { parseCSV(text); })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("カードデータの読み込みに失敗しました。");
+            
+            // CSVの自動読み込みを試行
+            fetch(CONFIG.csvPath)
+                .then(res => { if(!res.ok) throw new Error(); return res.text(); })
+                .then(text => parseCSV(text))
+                .catch(() => {
+                    // 失敗した場合は手動アップロード画面を表示
+                    document.getElementById('file-overlay').style.display = 'flex';
                 });
+            
+            // 初期設定の反映
+            document.getElementById('hand-size-input').value = CONFIG.defaultHandSize;
         });
 
-        function showMobilePane(side) {
-            const activeScreen = document.querySelector('.screen.active');
-            if (!activeScreen) return;
-            const left = activeScreen.querySelector('.left-pane');
-            const right = activeScreen.querySelector('.right-pane');
-            const btnSearch = document.getElementById('btn-search');
-            const btnDeck = document.getElementById('btn-deck');
-            if (side === 'left') {
-                left.classList.add('active-pane'); right.classList.remove('active-pane');
-                btnSearch.classList.add('active'); btnDeck.classList.remove('active');
-            } else {
-                left.classList.remove('active-pane'); right.classList.add('active-pane');
-                btnSearch.classList.remove('active'); btnDeck.classList.add('active');
+        /* -----------------------------------------
+           CSV解析ロジック
+           ----------------------------------------- */
+        function parseCSV(txt) {
+            const lines = txt.split(/\r?\n/);
+            MASTER_DB = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim(); if(!line) continue;
+                // カンマ区切り（クォート考慮）
+                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cells.length < 10) continue;
+
+                const clean = (s) => (s || "").replace(/^"|"$/g, '').replace(/""/g, '"').trim();
+                
+                // 画像ファイル名の処理
+                let fName = clean(cells[16]);
+                if (fName && !fName.includes(".")) fName += ".png";
+
+                // 効果テキストの結合
+                const effects = [cells[11], cells[12], cells[13], cells[14]]
+                    .map(clean)
+                    .filter(t => t && t !== "-" && t !== "‐")
+                    .join("\n");
+
+                const name = clean(cells[0]);
+                const reading = clean(cells[17]);
+
+                MASTER_DB.push({
+                    id: i,
+                    name: name,
+                    reading: reading,
+                    color: clean(cells[1]),
+                    rarity: clean(cells[2]),
+                    category: clean(cells[3]),
+                    type: clean(cells[4]),
+                    costTotal: parseInt(clean(cells[6])) || 0,
+                    atk: parseInt(clean(cells[8])) || 0,
+                    hp: parseInt(clean(cells[9])) || 0,
+                    effect: effects,
+                    fileName: fName || "default.png",
+                    // 検索用文字列
+                    searchText: (name + reading + effects + clean(cells[4])).toLowerCase()
+                });
             }
+            filterCards();
+            document.getElementById('file-overlay').style.display = 'none';
         }
 
-        function toggleFilters() {
-            const area = document.getElementById('advanced-filters');
-            const btn = document.getElementById('filter-toggle-btn');
-            const isClosed = window.getComputedStyle(area).display === 'none';
-            if (isClosed) {
-                area.style.display = 'grid';
-                btn.textContent = '▲ 詳細条件を閉じる';
-                btn.style.background = '#30363d'; btn.style.color = '#fff';
+        /* -----------------------------------------
+           検索・フィルタリング
+           ----------------------------------------- */
+        function filterCards() {
+            const getChecked = (id) => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(e => e.value);
+            const val = (id, def) => { const v = document.getElementById(id).value; return v === "" ? def : parseInt(v); };
+
+            const q = {
+                text: document.getElementById('q-text').value.toLowerCase(),
+                cats: getChecked('grp-cat'),
+                cols: getChecked('grp-col'),
+                cMin: val('q-cost-min', 0),
+                cMax: val('q-cost-max', CONFIG.limit.cost)
+            };
+
+            let filtered = MASTER_DB.filter(c => {
+                if (q.text && !c.searchText.includes(q.text)) return false;
+                if (q.cats.length && !q.cats.some(cat => c.category.includes(cat))) return false;
+                if (q.cols.length && !q.cols.some(col => c.color.includes(col))) return false;
+                if (c.costTotal < q.cMin || c.costTotal > q.cMax) return false;
+                return true;
+            });
+
+            // ソート
+            const sk = document.getElementById('q-sort-key').value;
+            const sd = parseInt(document.getElementById('q-sort-dir').value);
+            filtered.sort((a, b) => {
+                let vA = a[sk], vB = b[sk];
+                if (sk === 'name') { vA = a.reading || a.name; vB = b.reading || b.name; return vA.localeCompare(vB, 'ja') * sd; }
+                return (vA - vB) * sd;
+            });
+
+            renderResults(filtered);
+        }
+
+        /* -----------------------------------------
+           描画系
+           ----------------------------------------- */
+        function renderResults(list) {
+            const area = document.getElementById('search-results');
+            area.innerHTML = '';
+            list.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'card-row';
+                
+                // 効果内のアイコン置換
+                const effectHtml = c.effect.replace(/\(([^)]{1,15})\)/g, (m, icon) => {
+                    return `<img src="${CONFIG.iconDir}${icon.trim()}.png" class="inline-icon" onerror="this.style.display='none';this.insertAdjacentText('afterend','${m}')">`;
+                });
+
+                row.innerHTML = `
+                    <div class="img-box" onclick="addToDeck('${c.name.replace(/'/g, "\\'")}')">
+                        <img src="${CONFIG.imageDir}${c.fileName}" onerror="this.src='${CONFIG.noImage}'">
+                    </div>
+                    <div class="card-info">
+                        <div class="card-name">${c.name}</div>
+                        <div class="card-sub">
+                            ${c.atk || c.hp ? `<span class="stat-emphasis">${c.atk}/${c.hp}</span>` : ''}
+                            <span class="info-scroll-area">| ${c.costTotal}CP | ${c.category} | ${c.type}</span>
+                        </div>
+                        ${c.effect ? `<div class="card-effect">${effectHtml}</div>` : ''}
+                    </div>
+                    <button class="btn btn-green btn-add" onclick="addToDeck('${c.name.replace(/'/g, "\\'")}')">+</button>
+                `;
+                
+                // プレビューイベント付与
+                const img = row.querySelector('img');
+                setupPreview(img, `${CONFIG.imageDir}${c.fileName}`);
+                
+                area.appendChild(row);
+            });
+        }
+
+        function renderDeck() {
+            const area = document.getElementById('deck-list');
+            area.innerHTML = '';
+            myDeck.forEach(d => {
+                const item = document.createElement('div');
+                item.className = 'deck-item';
+                item.innerHTML = `
+                    <div class="badge">${d.count}</div>
+                    <img src="${CONFIG.imageDir}${d.fileName}" onerror="this.src='${CONFIG.noImage}'">
+                    <div class="deck-controls">
+                        <button class="ctrl-btn minus" onclick="removeFromDeck('${d.name.replace(/'/g, "\\'")}')">－</button>
+                        <button class="ctrl-btn plus" onclick="addToDeck('${d.name.replace(/'/g, "\\'")}')">＋</button>
+                    </div>
+                `;
+                setupPreview(item.querySelector('img'), `${CONFIG.imageDir}${d.fileName}`);
+                area.appendChild(item);
+            });
+            document.getElementById('total-count').textContent = myDeck.reduce((sum, d) => sum + d.count, 0);
+        }
+
+        /* -----------------------------------------
+           デッキ操作
+           ----------------------------------------- */
+        function addToDeck(name) {
+            const master = MASTER_DB.find(m => m.name === name);
+            if (!master) return;
+            const inDeck = myDeck.find(d => d.name === name);
+            
+            if (inDeck) {
+                if (inDeck.count >= CONFIG.maxCardsPerName) return;
+                inDeck.count++;
             } else {
-                area.style.display = 'none';
-                btn.textContent = '▼ 詳細条件を指定する';
-                btn.style.background = '#21262d'; btn.style.color = '#8b949e';
+                myDeck.push({...master, count: 1});
             }
+            renderDeck();
         }
 
-        function setupResizer(leftId, gutterId) {
-            const leftPane = document.getElementById(leftId);
-            const gutter = document.getElementById(gutterId);
-            let isDragging = false;
-            gutter.addEventListener('mousedown', (e) => {
-                isDragging = true; gutter.classList.add('dragging');
-                document.body.style.cursor = 'col-resize'; e.preventDefault();
-            });
-            document.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                let newWidth = e.clientX;
-                if (newWidth < 200) newWidth = 200;
-                if (newWidth > window.innerWidth - 100) newWidth = window.innerWidth - 100;
-                leftPane.style.width = newWidth + 'px';
-            });
-            document.addEventListener('mouseup', () => {
-                if (isDragging) { isDragging = false; gutter.classList.remove('dragging'); document.body.style.cursor = 'default'; }
-            });
+        function removeFromDeck(name) {
+            const inDeck = myDeck.find(d => d.name === name);
+            if (inDeck) {
+                inDeck.count--;
+                if (inDeck.count <= 0) myDeck = myDeck.filter(d => d.name !== name);
+            }
+            renderDeck();
         }
 
-        function closePreviewMobile() {
-            const p = document.getElementById('hover-preview');
-            const btn = document.getElementById('preview-close-btn');
-            p.style.display = 'none';
-            btn.style.display = 'none';
-        }
-
-        function enablePreview(el, src) {
+        /* -----------------------------------------
+           プレビューシステム
+           ----------------------------------------- */
+        function setupPreview(el, src) {
             if (isMobile()) {
                 el.onclick = (e) => {
+                    e.stopPropagation();
                     const p = document.getElementById('hover-preview');
-                    const img = document.getElementById('preview-img');
-                    const btn = document.getElementById('preview-close-btn');
-                    img.src = src;
+                    document.getElementById('preview-img').src = src;
                     p.style.display = 'flex';
                     p.style.opacity = '1';
-                    btn.style.display = 'flex';
-                    e.stopPropagation();
                 };
             } else {
                 el.onmouseenter = (e) => {
@@ -521,241 +523,142 @@
                         const p = document.getElementById('hover-preview');
                         document.getElementById('preview-img').src = src;
                         p.style.display = 'block';
-                        p.style.opacity = '1';
                         updatePreviewPos(e);
-                    }, 300);
+                    }, CONFIG.previewDelay);
                 };
-                el.onmousemove = (e) => updatePreviewPos(e);
-                el.onmouseleave = () => { 
-                    clearTimeout(hoverTimer); 
-                    document.getElementById('hover-preview').style.display = 'none'; 
+                el.onmousemove = updatePreviewPos;
+                el.onmouseleave = () => {
+                    clearTimeout(hoverTimer);
+                    document.getElementById('hover-preview').style.display = 'none';
                 };
             }
         }
-        
+
         function updatePreviewPos(e) {
-            if (isMobile()) return;
             const p = document.getElementById('hover-preview');
-            const offset = 20; const pW = 320, pH = 448;
-            let x = e.clientX + offset, y = e.clientY + offset;
-            if (x + pW > window.innerWidth) x = e.clientX - pW - offset;
-            if (y + pH > window.innerHeight) y = e.clientY - pH - offset;
-            p.style.left = Math.max(0, x) + 'px'; p.style.top = Math.max(0, y) + 'px';
+            let x = e.clientX + 20, y = e.clientY + 20;
+            if (x + 320 > window.innerWidth) x = e.clientX - 340;
+            if (y + 448 > window.innerHeight) y = window.innerHeight - 460;
+            p.style.left = x + 'px'; p.style.top = Math.max(10, y) + 'px';
         }
 
-        function loadFile(enc) { const f=document.getElementById('csv-file').files[0]; if(!f)return; const r=new FileReader(); r.onload=(e)=>{ parseCSV(e.target.result); document.getElementById('file-overlay').style.display='none'; }; r.readAsText(f,enc); }
-        
-        function parseCSV(txt) {
-            const lines = txt.split(/\r?\n/);
-            MASTER_DB = [];
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim(); if(!line) continue;
-                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                if (cells.length < 16) continue;
-                const clean = (str) => {
-                    let s = (str || "").trim();
-                    if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1).replace(/""/g, '"');
-                    return s;
-                };
-                let fName = clean(cells[16]);
-                if (fName && !fName.includes(".")) fName += ".png";
-                const name = clean(cells[0]);
-                const category = clean(cells[3]);
-                const type = clean(cells[4]);
-                const reading = clean(cells[17]); 
-                const rawEffects = [cells[11], cells[12], cells[13], cells[14]];
-                const effect = rawEffects.map(t => clean(t)).filter(t => t !== "" && t !== "-" && t !== "‐").join("\n");
-                const toHira = (str) => str.replace(/[\u30a1-\u30f6]/g, m => String.fromCharCode(m.charCodeAt(0) - 0x60));
-                const rawText = name + reading + type + category + effect;
-                const searchText = (rawText + toHira(rawText)).toLowerCase();
-                MASTER_DB.push({
-                    id: i, name: name, reading: reading, 
-                    color: clean(cells[1]), rarity: clean(cells[2]), category: category, type: type,
-                    costTotal: parseInt(clean(cells[6])) || 0,
-                    atk: parseInt(clean(cells[8])) || 0, hp: parseInt(clean(cells[9])) || 0,
-                    effect: effect, fileName: fName, searchText: searchText 
-                });
+        function closePreviewMobile() {
+            document.getElementById('hover-preview').style.display = 'none';
+        }
+
+        /* -----------------------------------------
+           ユーティリティ・画面遷移
+           ----------------------------------------- */
+        function setupResizer(paneId, gutterId) {
+            const pane = document.getElementById(paneId);
+            const gutter = document.getElementById(gutterId);
+            let dragging = false;
+            gutter.addEventListener('mousedown', () => dragging = true);
+            document.addEventListener('mousemove', (e) => {
+                if (!dragging) return;
+                pane.style.width = Math.max(250, Math.min(e.clientX, window.innerWidth * 0.8)) + 'px';
+            });
+            document.addEventListener('mouseup', () => dragging = false);
+        }
+
+        function toggleFilters() {
+            const f = document.getElementById('advanced-filters');
+            const btn = document.getElementById('filter-toggle-btn');
+            const isHidden = f.style.display === 'none';
+            f.style.display = isHidden ? 'grid' : 'none';
+            btn.textContent = isHidden ? '▲ フィルターを閉じる' : '▼ 詳細フィルターを表示';
+        }
+
+        function showMobilePane(side) {
+            const left = document.querySelector('.left-pane.active-pane') || document.querySelector('.left-pane');
+            const right = document.querySelector('.right-pane.active-pane') || document.querySelector('.right-pane');
+            if (side === 'left') {
+                left.classList.add('active-pane'); right.classList.remove('active-pane');
+                document.getElementById('btn-search').classList.add('active');
+                document.getElementById('btn-deck').classList.remove('active');
+            } else {
+                left.classList.remove('active-pane'); right.classList.add('active-pane');
+                document.getElementById('btn-search').classList.remove('active');
+                document.getElementById('btn-deck').classList.add('active');
             }
-            filterCards();
         }
 
-        function filterCards() {
-            const getChecked = (id) => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(e => e.value);
-            const getNum = (id, defaultVal) => {
-                const val = document.getElementById(id).value;
-                return val === "" ? defaultVal : parseInt(val);
-            };
-            const q = {
-                text: document.getElementById('q-text').value.toLowerCase().trim(),
-                cats: getChecked('grp-cat'), cols: getChecked('grp-col'), rares: getChecked('grp-rare'),
-                cMin: getNum('q-cost-min', 0), cMax: getNum('q-cost-max', CONFIG.defaultCostMax),
-                aMin: getNum('q-atk-min', 0), aMax: getNum('q-atk-max', CONFIG.defaultStatMax),
-                hMin: getNum('q-hp-min', 0), hMax: getNum('q-hp-max', CONFIG.defaultStatMax)
-            };
-            let filtered = MASTER_DB.filter(c => {
-                if (!c.searchText.includes(q.text)) return false;
-                if (q.cats.length > 0 && !q.cats.some(cat => c.category.includes(cat))) return false;
-                if (q.cols.length > 0 && !q.cols.some(col => c.color.includes(col))) return false;
-                if (q.rares.length > 0 && !q.rares.some(r => c.rarity === r)) return false;
-                if (c.costTotal < q.cMin || c.costTotal > q.cMax) return false;
-                if (c.atk < q.aMin || c.atk > q.aMax) return false;
-                if (c.hp < q.hMin || c.hp > q.hMax) return false;
-                return true;
-            });
-            const sortKey = document.getElementById('q-sort-key').value;
-            const sortDir = parseInt(document.getElementById('q-sort-dir').value);
-            filtered.sort((a, b) => {
-                if (sortKey === 'name') {
-                    const valA = a.reading || a.name; const valB = b.reading || b.name;
-                    return String(valA).localeCompare(String(valB), 'ja') * sortDir;
-                }
-                const valA = a[sortKey] || 0; const valB = b[sortKey] || 0;
-                return (valA - valB) * sortDir;
-            });
-            renderResults(filtered);
+        function switchToMulligan() {
+            document.getElementById('screen-builder').classList.remove('active');
+            document.getElementById('screen-mulligan').classList.add('active');
+            document.getElementById('manual-input').value = myDeck.map(d => `${d.name} x${d.count}`).join("\n");
+            if(isMobile()) showMobilePane('left');
         }
 
-        function formatEffect(text) {
-            if (!text) return "";
-            let normalized = text.replace(/（/g, '(').replace(/）/g, ')');
-            return normalized.replace(/\(([^)]{1,15})\)/g, (match, content) => {
-                const cleanContent = content.trim();
-                return `<img src="images/icons/${cleanContent}.png" class="inline-icon" alt="${match}" onerror="this.style.display='none';this.insertAdjacentText('afterend','${match}')">`;
-            });
+        function switchToBuilder() {
+            document.getElementById('screen-mulligan').classList.remove('active');
+            document.getElementById('screen-builder').classList.add('active');
+            if(isMobile()) showMobilePane('left');
         }
 
-        function renderResults(list) {
-            const area = document.getElementById('search-results'); area.innerHTML = '';
-            const mobile = isMobile();
-            list.forEach(c => {
-                const safeName = c.name.replace(/'/g, "\\'");
-                const div = document.createElement('div');
-                div.className = 'card-row';
-                const effectHtml = formatEffect(c.effect);
-                const effectPart = effectHtml ? `<div class="card-effect">${effectHtml}</div>` : ""; 
-                
-                let infoParts = [];
-                let hasStat = false;
-                if ((c.category && c.category.includes("ユニット")) || c.atk > 0 || c.hp > 0) {
-                     hasStat = true;
-                }
-                if (c.category) infoParts.push(c.category);
-                if (c.color) infoParts.push(c.color);
-                if (c.type && c.type !== "-" && c.type !== "‐") infoParts.push(c.type);
-                
-                let subInfoHtml = "";
-                if (hasStat) {
-                    subInfoHtml = `
-                        <span class="stat-emphasis">${c.atk}/${c.hp}</span>
-                        <span class="info-scroll-area">| ${infoParts.join(" | ")}</span>
-                    `;
-                } else {
-                    subInfoHtml = `<span class="info-scroll-area">${infoParts.join(" | ")}</span>`;
-                }
-
-                const imgClickAction = mobile ? "" : `onclick="addToDeck('${safeName}')"`;
-                div.innerHTML = `
-                    <div class="img-box" ${imgClickAction}>
-                        <img src="images/${c.fileName}" onerror="this.src='https://via.placeholder.com/50x70?text=NoImg'">
-                    </div>
-                    <div class="card-info">
-                        <div class="info-header">
-                            <span class="card-name">${c.name}</span>
-                            <span class="card-sub">${subInfoHtml}</span>
-                        </div>
-                        ${effectPart}
-                    </div>
-                    <button class="btn btn-green btn-add" onclick="addToDeck('${safeName}')">+</button>
-                `;
-                enablePreview(div.querySelector('.img-box img'), `images/${c.fileName}`);
-                area.appendChild(div);
-            });
+        function copyRecipe() {
+            const txt = myDeck.map(d => `${d.name} x${d.count}`).join("\n");
+            navigator.clipboard.writeText(txt).then(() => alert("レシピをクリップボードにコピーしました"));
         }
 
-        function addToDeck(name) {
-            const master = MASTER_DB.find(d => d.name === name);
-            const inDeck = myDeck.find(d => d.name === name);
-            if (inDeck) { if (inDeck.count >= CONFIG.maxCardsInDeck) return; inDeck.count++; } 
-            else { myDeck.push({...master, count: 1}); }
-            myDeck.sort((a,b) => a.id - b.id); renderDeck();
-        }
-
-        function renderDeck() {
-            const area = document.getElementById('deck-list'); area.innerHTML = '';
-            const mobile = isMobile();
-            myDeck.forEach(d => {
-                const safeName = d.name.replace(/'/g, "\\'");
-                const div = document.createElement('div'); div.className = 'deck-item';
-                
-                // 画像部分のクリック挙動
-                const imgAction = mobile 
-                    ? "" 
-                    : `onclick="addToDeck('${safeName}')" oncontextmenu="event.preventDefault(); removeFromDeck('${safeName}')"`;
-                
-                // PCでもスマホでもボタンを表示
-                const deckControls = `
-                    <div class="deck-controls">
-                        <button class="ctrl-btn minus" onclick="event.stopPropagation(); removeFromDeck('${safeName}')">－</button>
-                        <button class="ctrl-btn plus" onclick="event.stopPropagation(); addToDeck('${safeName}')">＋</button>
-                    </div>
-                `;
-                
-                div.innerHTML = `<div class="badge">${d.count}</div><img src="images/${d.fileName}" ${imgAction}>${deckControls}`;
-                enablePreview(div.querySelector('img'), `images/${d.fileName}`);
-                area.appendChild(div);
-            });
-            document.getElementById('total-count').textContent = myDeck.reduce((acc, d) => acc + d.count, 0);
-        }
-
-        function removeFromDeck(name) {
-            const inDeck = myDeck.find(d => d.name === name);
-            if (inDeck) { inDeck.count--; if (inDeck.count <= 0) myDeck = myDeck.filter(d => d.name !== name); }
-            renderDeck();
-        }
-
-        function switchToMulligan() { 
-            document.getElementById('screen-builder').classList.remove('active'); 
-            document.getElementById('screen-mulligan').classList.add('active'); 
-            document.getElementById('manual-input').value = myDeck.map(d => `${d.name} x${d.count}`).join("\n"); 
-            showMobilePane('left'); 
-        }
-        function switchToBuilder() { 
-            document.getElementById('screen-mulligan').classList.remove('active'); 
-            document.getElementById('screen-builder').classList.add('active'); 
-            showMobilePane('left'); 
-        }
-        
+        /* -----------------------------------------
+           一人回しロジック
+           ----------------------------------------- */
         function applyManualList() {
-            const input = document.getElementById('manual-input').value; myDeck = [];
-            input.split("\n").forEach(line => {
-                let match = line.match(/^(.+?)\s*[x×*]\s*(\d+)$/);
-                let name = match ? match[1].trim() : line.trim(); let count = match ? parseInt(match[2]) : 1;
-                let master = MASTER_DB.find(m => m.name === name);
-                if (master) myDeck.push({...master, count: Math.min(count, CONFIG.maxCardsInDeck)});
+            const lines = document.getElementById('manual-input').value.split('\n');
+            myDeck = [];
+            lines.forEach(line => {
+                const match = line.match(/^(.+?)\s*[x×*]\s*(\d+)$/);
+                const name = (match ? match[1] : line).trim();
+                const count = match ? parseInt(match[2]) : 1;
+                const master = MASTER_DB.find(m => m.name === name);
+                if (master) myDeck.push({...master, count: Math.min(count, CONFIG.maxCardsPerName)});
             });
             renderDeck();
+            alert("リストを適用しました");
         }
-        function handleRecipeUpload(e) { const file=e.target.files[0]; const reader=new FileReader(); reader.onload=(ev)=>{ document.getElementById('manual-input').value=ev.target.result; applyManualList(); }; reader.readAsText(file); }
-        
+
         function initSim() {
-            simDeck = []; myDeck.forEach(card => { for (let i = 0; i < card.count; i++) simDeck.push({...card}); });
-            if (simDeck.length < 1) return alert("デッキが空です");
-            for (let i = simDeck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [simDeck[i], simDeck[j]] = [simDeck[j], simDeck[i]]; }
+            simDeck = [];
+            myDeck.forEach(d => { for(let i=0; i<d.count; i++) simDeck.push({...d}); });
+            if (simDeck.length === 0) return alert("デッキが空です");
+            
+            // シャッフル
+            for (let i = simDeck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [simDeck[i], simDeck[j]] = [simDeck[j], simDeck[i]];
+            }
+            
             document.getElementById('play-area').innerHTML = '';
-            const hSize = parseInt(document.getElementById('hand-size').value);
-            for (let i = 0; i < hSize; i++) drawOne();
+            const size = parseInt(document.getElementById('hand-size-input').value) || CONFIG.defaultHandSize;
+            for (let i = 0; i < size; i++) drawOne();
             updateSimCount();
             if (isMobile()) showMobilePane('right');
         }
+
         function drawOne() {
-            if (simDeck.length === 0) return; const card = simDeck.pop();
-            const img = document.createElement('img'); img.src = `images/${card.fileName}`; img.className = 'play-card';
-            enablePreview(img, `images/${card.fileName}`); 
-            if (!isMobile()) img.onclick = () => img.remove();
-            document.getElementById('play-area').appendChild(img); updateSimCount();
+            if (simDeck.length === 0) return;
+            const card = simDeck.pop();
+            const img = document.createElement('img');
+            img.src = `${CONFIG.imageDir}${card.fileName}`;
+            img.className = 'play-card';
+            img.onclick = () => img.remove();
+            setupPreview(img, img.src);
+            document.getElementById('play-area').appendChild(img);
+            updateSimCount();
         }
-        function updateSimCount() { document.getElementById('sim-deck-count').textContent = simDeck.length; }
-        function copyRecipe() { let txt = myDeck.map(d => `${d.name} x${d.count}`).join("\n"); navigator.clipboard.writeText(txt).then(() => alert("コピーしました！")); }
+
+        function updateSimCount() {
+            document.getElementById('sim-deck-count').textContent = simDeck.length;
+        }
+
+        function loadFile(enc) {
+            const file = document.getElementById('csv-file').files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => parseCSV(e.target.result);
+            reader.readAsText(file, enc);
+        }
     </script>
 </body>
 </html>
