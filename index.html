@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Crystal Frontier - Custom Builder</title>
     <style>
         /* =========================================
@@ -21,7 +21,7 @@
             --blue: #1f6feb;
         }
 
-        /* ズーム防止のため touch-action を追加 */
+        /* ズーム防止 & 全体設定 */
         body { 
             font-family: "Helvetica Neue", Arial, sans-serif; 
             background: var(--bg); color: var(--text); 
@@ -208,8 +208,12 @@
 
             .screen { flex-direction: column; height: calc(100vh - 50px); }
             
+            /* ★修正：スマホで上部の文字が途切れないよう padding-top を追加 */
             .left-pane, .right-pane { 
-                width: 100% !important; max-width: 100% !important; height: 100%; display: none; padding: 5px;
+                width: 100% !important; max-width: 100% !important; height: 100%; display: none; 
+                padding: 10px 5px 5px 5px;
+                padding-top: env(safe-area-inset-top, 10px); 
+                box-sizing: border-box;
             }
             .left-pane.active-pane, .right-pane.active-pane { display: flex; }
             .gutter { display: none !important; }
@@ -220,9 +224,18 @@
                 background: #21262d; border: 1px solid #30363d; color: #8b949e;
                 cursor: pointer; font-size: 12px; font-weight: bold; border-radius: 4px;
             }
-            #filter-toggle-btn:hover { background: #30363d; color: #fff; }
 
-            /* ★修正：初期表示を display: none に設定 */
+            /* ★修正：＋ボタンをスマホ向けに縦長・大きく調整 */
+            .btn-add {
+                width: 46px;
+                font-size: 24px;
+                align-self: stretch; /* カードの行の高さに合わせて縦に伸ばす */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-left: 2px;
+            }
+
             #hover-preview { 
                 display: none; 
                 width: 100vw !important; height: 100vh !important; 
@@ -232,21 +245,17 @@
                 align-items: center; justify-content: center;
                 z-index: 9999;
             }
-            #hover-preview img {
-                width: auto; height: auto; max-width: 90vw; max-height: 80vh; 
-                border: 2px solid var(--accent); border-radius: 8px;
-            }
             
             #mobile-nav {
                 display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 50px;
                 background: #161b22; border-top: 1px solid #30363d; z-index: 2000;
+                padding-bottom: env(safe-area-inset-bottom); /* iPhone等の下部バー考慮 */
             }
             .nav-btn {
                 flex: 1; border: none; background: none; color: #8b949e; font-weight: bold;
                 cursor: pointer; border-right: 1px solid #30363d; font-size: 14px;
                 touch-action: manipulation;
             }
-            .nav-btn:last-child { border-right: none; }
             .nav-btn.active { background: #1f6feb; color: #fff; }
 
             .mobile-deck-controls { display: block; }
