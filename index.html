@@ -40,12 +40,25 @@
             background: var(--bg-main); color: var(--text-main); 
             margin: 0; padding: 0; overflow: hidden; font-size: 13px;
             touch-action: manipulation; width: 100%; height: 100dvh;
+            
+            /* ★修正1: Flexboxレイアウトにして、ナビゲーションとメイン画面を縦に並べる */
+            display: flex;
+            flex-direction: column;
         }
         
         :root { --card-w: var(--card-w-pc); --card-h: var(--card-h-pc); }
 
         /* レイアウト */
-        .screen { display: none; height: 100dvh; width: 100%; flex-direction: row; }
+        /* ★修正2: height:100dvh を削除し、残りの高さを埋める設定に変更 */
+        .screen { 
+            display: none; 
+            /* height: 100dvh;  <-- 削除 */
+            flex-grow: 1;      /* ★追加: 残りのスペースを埋める */
+            height: auto;      /* ★追加 */
+            min-height: 0;     /* ★追加: 子要素のスクロールを正しく機能させるために必須 */
+            width: 100%; 
+            flex-direction: row; 
+        }
         .active { display: flex; }
         
         /* 左パネル */
@@ -164,7 +177,15 @@
             .pc-only-text { display: none !important; }
             :root { --card-w: var(--card-w-mob); --card-h: var(--card-h-mob); }
             .play-card { width: var(--card-w-mob); height: var(--card-h-mob); }
-            .screen { flex-direction: column; height: calc(100dvh - 50px); }
+            
+            /* スマホの場合は既存のレイアウトロジックを維持 (100dvh - 下部メニュー50px) */
+            /* flex:1で伸びてしまうと計算がずれる可能性があるため、再度明示的に指定 */
+            .screen { 
+                flex-direction: column; 
+                height: calc(100dvh - 50px); 
+                flex-grow: 0; /* PC用のflex-growをリセット */
+            }
+            
             .left-pane, .right-pane { width: 100% !important; max-width: 100% !important; height: 100%; display: none; padding: 15px 5px 5px 5px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); box-sizing: border-box; }
             .left-pane.active-pane, .right-pane.active-pane { display: flex; }
             .gutter { display: none !important; }
@@ -191,7 +212,7 @@
             border-bottom: 1px solid #333;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             color: #e0e0e0;
-            /* 固定ヘッダーにする場合は以下を有効化 */
+            flex-shrink: 0; /* ★追加: 画面が狭くなっても潰れないようにする */
             /* position: sticky; top: 0; z-index: 2000; */
         }
         
@@ -797,4 +818,3 @@
     </script>
 </body>
 </html>
-
