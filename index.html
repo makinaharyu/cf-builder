@@ -510,29 +510,21 @@
 
             let filtered = MASTER_DB.filter(c => {
                 // 1. 基本的なトークン非表示ルール
-                // トークンは「トークン」チェックが入っていない限り、何があっても表示しない
                 if (c.isToken && !showToken) return false;
 
                 // 2. フィルタリング動作
-                // カテゴリ選択が1つでもある、またはトークンチェックがONの場合（＝何らかの分類フィルタがアクティブ）
                 if (q.cats.length > 0 || showToken) {
                     let matchCat = false;
                     
-                    // 選択されたカテゴリ(Unit, Magic等)のいずれかに一致するか
                     if (q.cats.some(cat => c.category.includes(cat))) {
                         matchCat = true;
                     }
-                    
-                    // または、トークンチェックONで、かつこれがトークンである場合
                     if (showToken && c.isToken) {
                         matchCat = true;
                     }
-                    
-                    // どちらにも該当しなければ除外
                     if (!matchCat) return false;
                 }
                 
-                // --- 以下、共通フィルタリング ---
                 if (q.keywords.length > 0 && !q.keywords.every(key => c.searchText.includes(key))) return false;
                 if (q.cols.length > 0 && !q.cols.some(col => c.color.includes(col))) return false;
                 if (q.rares.length > 0 && !q.rares.some(r => c.rarity === r)) return false;
@@ -608,7 +600,11 @@
                     subInfoHtml = `<span class="info-scroll-area">${infoParts.join(" | ")}</span>`;
                 }
 
-                const imgClickAction = mobile ? "" : `onclick="addToDeck('${safeNameAttr}')"`;
+                // ★修正: トークンの場合は画像クリックでのデッキ追加を無効化する（空文字にする）
+                const imgClickAction = (mobile || c.isToken) ? "" : `onclick="addToDeck('${safeNameAttr}')"`;
+                
+                // ★修正: トークンの場合は追加ボタンを表示しない
+                const addBtn = c.isToken ? "" : `<button class="btn btn-green btn-add" onclick="addToDeck('${safeNameAttr}')">+</button>`;
                 
                 div.innerHTML = `
                     <div class="img-box" ${imgClickAction}>
@@ -621,7 +617,7 @@
                         </div>
                         ${effectPart}
                     </div>
-                    <button class="btn btn-green btn-add" onclick="addToDeck('${safeNameAttr}')">+</button>
+                    ${addBtn}
                 `;
                 enablePreview(div.querySelector('.img-box img'), `images/${c.fileName}`);
                 area.appendChild(div);
@@ -630,6 +626,10 @@
 
         function addToDeck(name) {
             const master = MASTER_DB.find(d => d.name === name);
+            if (!master) return;
+            // ★修正: 万が一トークンが呼ばれてもデッキに入れない
+            if (master.isToken) return;
+
             const inDeck = myDeck.find(d => d.name === name);
             if (inDeck) { if (inDeck.count >= CONFIG.maxCardsInDeck) return; inDeck.count++; } 
             else { myDeck.push({...master, count: 1}); }
@@ -646,7 +646,9 @@
                 const safeNameAttr = safeName.replace(/"/g, "&quot;");
                 
                 const div = document.createElement('div'); div.className = 'deck-item';
-                const imgAction = mobile ? "" : `onclick="addToDeck('${safeNameAttr}')" oncontextmenu="event.preventDefault(); removeFromDeck('${safeNameAttr}')"`;
+                // デッキ内のトークン対応（通常ありえないが念のため）
+                const imgAction = (mobile || d.isToken) ? "" : `onclick="addToDeck('${safeNameAttr}')" oncontextmenu="event.preventDefault(); removeFromDeck('${safeNameAttr}')"`;
+                
                 const deckControls = `
                     <div class="deck-controls">
                         <button class="ctrl-btn minus" onclick="event.stopPropagation(); removeFromDeck('${safeNameAttr}')">－</button>
@@ -686,7 +688,8 @@
                 let match = line.match(/^(.+?)\s*[x×*]\s*(\d+)$/);
                 let name = match ? match[1].trim() : line.trim(); let count = match ? parseInt(match[2]) : 1;
                 let master = MASTER_DB.find(m => m.name === name);
-                if (master) myDeck.push({...master, count: Math.min(count, CONFIG.maxCardsInDeck)});
+                // トークンは手動入力でも弾く
+                if (master && !master.isToken) myDeck.push({...master, count: Math.min(count, CONFIG.maxCardsInDeck)});
             });
             renderDeck();
         }
