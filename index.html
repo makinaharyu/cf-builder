@@ -194,15 +194,17 @@
             .left-pane.active-pane, .right-pane.active-pane { display: flex; }
             .gutter { display: none !important; }
 
-            /* ★修正: 詳細条件フィルターのスクロール設定 */
+            /* ★修正: 詳細条件フィルターのスクロール設定を修正 */
             #advanced-filters { 
                 display: none; 
                 border-top: none; 
                 margin-top: -5px;
-                /* 画面高さの55%程度を上限にし、それ以上は内部スクロールさせる */
-                max-height: 55vh; 
+                /* 高さ固定制限を撤廃し、画面の余り全てを使う設定に変更 */
+                flex-grow: 1;
+                min-height: 0; /* Flexbox内でスクロールさせるための重要設定 */
                 overflow-y: auto;
-                -webkit-overflow-scrolling: touch; /* 滑らかスクロール */
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 20px;
             }
 
             #filter-toggle-btn { display: block; width: 100%; padding: 8px; margin-bottom: 5px; background: #21262d; border: 1px solid var(--border-col); color: var(--text-sub); cursor: pointer; font-size: 12px; font-weight: bold; border-radius: 4px; }
@@ -445,37 +447,43 @@
 
         function toggleFilters() {
             const area = document.getElementById('advanced-filters');
+            const results = document.getElementById('search-results');
             const btn = document.getElementById('filter-toggle-btn');
             const isClosed = window.getComputedStyle(area).display === 'none';
+            
             if (isClosed) {
                 area.style.display = 'grid';
                 btn.textContent = '▲ 詳細条件を閉じる';
                 btn.style.background = '#30363d'; btn.style.color = '#fff';
+                
+                // ★修正: スマホの時は検索結果を隠して、フィルタを最大化する
+                if (isMobile()) {
+                    results.style.display = 'none';
+                }
             } else {
                 area.style.display = 'none';
                 btn.textContent = '▼ 詳細条件を指定する';
                 btn.style.background = '#21262d'; btn.style.color = '#8b949e';
+                
+                // ★修正: スマホでフィルタを閉じたら検索結果を戻す
+                if (isMobile()) {
+                    results.style.display = 'block';
+                }
             }
         }
 
-        /* ★追加: 検索条件をリセットする関数 */
         function resetSearch() {
-            // テキストボックスクリア
             document.getElementById('q-text').value = '';
             
-            // チェックボックスを全て外す (詳細条件内)
             const checks = document.querySelectorAll('#advanced-filters input[type="checkbox"]');
             checks.forEach(c => c.checked = false);
             
-            // 数値入力エリアをクリア
             const nums = document.querySelectorAll('#advanced-filters input[type="number"]');
             nums.forEach(n => n.value = '');
             
-            // ソートをID順に戻す（必要に応じて）
             document.getElementById('q-sort-key').value = 'id';
             document.getElementById('q-sort-dir').value = '1';
             
-            // フィルタ実行
             filterCards();
         }
 
