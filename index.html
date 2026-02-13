@@ -160,22 +160,6 @@
         
         @keyframes drawAnim { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* ナビゲーションバッジのスタイル */
-        .nav-badge {
-            display: inline-block;
-            background: #ffffff;
-            color: #000000;
-            border-radius: 50%;
-            min-width: 18px;
-            height: 18px;
-            line-height: 18px;
-            text-align: center;
-            font-size: 11px;
-            font-weight: bold;
-            margin-left: 6px;
-            padding: 0 2px;
-        }
-
         /* スマホ対応 */
         @media (max-width: 768px) {
             .pc-only-text { display: none !important; }
@@ -320,7 +304,7 @@
 
     <div id="mobile-nav">
         <button class="nav-btn active" id="btn-search" onclick="showMobilePane('left')">🔍 検索</button>
-        <button class="nav-btn" id="btn-deck" onclick="showMobilePane('right')">🃏 デッキ<span id="mobile-deck-count" class="nav-badge">0</span></button>
+        <button class="nav-btn" id="btn-deck" onclick="showMobilePane('right')">🃏 デッキ</button>
     </div>
 
     <script>
@@ -542,9 +526,7 @@
                 enablePreview(div.querySelector('img'), `${CONFIG.path.cardImg}${d.fileName}`);
                 area.appendChild(div);
             });
-            const total = myDeck.reduce((acc, d) => acc + d.count, 0);
-            document.getElementById('total-count').textContent = total;
-            document.getElementById('mobile-deck-count').textContent = total;
+            document.getElementById('total-count').textContent = myDeck.reduce((acc, d) => acc + d.count, 0);
         }
 
         // プレビュー機能
@@ -553,8 +535,6 @@
                 el.onclick = (e) => {
                     const p = document.getElementById('hover-preview');
                     document.getElementById('preview-img').src = src;
-                    // 追加：スマホ版では閉じるボタンを表示する
-                    document.getElementById('preview-close-btn').style.display = 'block';
                     p.style.display = 'flex';
                     e.stopPropagation();
                 };
@@ -580,11 +560,7 @@
             p.style.left = Math.max(0, x) + 'px'; p.style.top = Math.max(0, y) + 'px';
         }
 
-        function closePreviewMobile() { 
-            document.getElementById('hover-preview').style.display = 'none'; 
-            // 追加：閉じるボタンを非表示に戻す
-            document.getElementById('preview-close-btn').style.display = 'none';
-        }
+        function closePreviewMobile() { document.getElementById('hover-preview').style.display = 'none'; }
 
         // UIユーティリティ
         function toggleFilters() {
