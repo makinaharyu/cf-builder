@@ -307,18 +307,16 @@
                 touch-action: manipulation;
                 display: flex; align-items: center; justify-content: center;
                 text-align: center; transition: all 0.2s ease;
-                position: relative; /* バッジの配置用 */
+                /* バッジの位置調整用に relative は削除し、Flexboxで並べる */
             }
             .nav-btn.active { 
                 background: var(--col-blue); color: #fff; 
                 font-size: 15px;
             }
             
-            /* デッキ枚数バッジ */
+            /* デッキ枚数バッジ (文字の右横に配置) */
             .nav-badge {
-                position: absolute;
-                top: 4px;
-                right: 25%; /* ボタンの中心より少し右 */
+                margin-left: 6px; /* 文字との間隔 */
                 min-width: 18px;
                 height: 18px;
                 background: #fff;
