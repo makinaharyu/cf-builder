@@ -249,18 +249,25 @@ nav a:hover {
         box-sizing: border-box;
     }
     
+    /* スマホヘッダー内のメニューボタン */
     #menu-toggle {
         background: none;
         border: none;
-        color: var(--accent-color);
+        color: #fff; /* 三本線を水色から白に変更 */
         font-size: 1.8rem;
         cursor: pointer;
     }
 
+    /* スマホ用ロゴの配色 */
     .mobile-logo {
-        color: #fff;
+        color: var(--accent-color); /* 「Crystal」を水色に */
         font-weight: bold;
         letter-spacing: 1px;
+        cursor: pointer;
+    }
+    
+    .mobile-logo span {
+        color: #fff; /* 「Frontier」を白に */
     }
 
     /* サイドバー（スライド式） */
