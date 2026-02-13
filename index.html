@@ -140,7 +140,7 @@
         .deck-item img:active { transform: scale(0.98); }
         .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: #fff; width: 22px; height: 22px; line-height: 22px; border-radius: 50%; font-weight: bold; text-align: center; border: 2px solid #fff; z-index: 10; font-size: 11px; pointer-events: none; }
         
-        /* ★追加: スマホ用デッキ操作ボタン */
+        /* スマホ用デッキ操作ボタン */
         .mobile-deck-controls {
             display: none; /* PCでは隠す */
             position: absolute; bottom: 0; left: 0; width: 100%; height: 30px; z-index: 20;
@@ -156,8 +156,21 @@
 
         .play-card { width: 120px; height: 168px; border: 2px solid #fff; border-radius: 6px; background: #000; animation: drawAnim 0.3s ease-out; cursor: help; }
         
-        #hover-preview { position: fixed; z-index: 9999; pointer-events: none; display: none; background: #000; border: 3px solid var(--accent); border-radius: 10px; box-shadow: 0 0 30px rgba(0,0,0,0.9); width: 320px; height: 448px; overflow: hidden; transition: opacity 0.3s; }
+        #hover-preview { 
+            position: fixed; z-index: 9999; pointer-events: none; display: none; 
+            background: #000; border: 3px solid var(--accent); border-radius: 10px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9); width: 320px; height: 448px; 
+            overflow: hidden; transition: opacity 0.3s; 
+        }
         #hover-preview img { width: 100%; height: 100%; object-fit: contain; }
+
+        /* ★追加: スマホ拡大時の閉じるボタン */
+        #preview-close-btn {
+            display: none; position: absolute; top: 5px; left: 5px; z-index: 10000;
+            width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.8);
+            color: #000; font-weight: bold; font-size: 20px; border: 2px solid #000;
+            cursor: pointer; align-items: center; justify-content: center;
+        }
         
         .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: #fff; font-size: 12px; }
         .btn-green { background: var(--green); } .btn-blue { background: var(--blue); } .btn-accent { background: var(--accent); color: #000; } .btn-red { background: var(--red); }
@@ -196,12 +209,20 @@
             }
             #filter-toggle-btn:hover { background: #30363d; color: #fff; }
 
-            /* ホバープレビュー */
+            /* ホバープレビュー（スマホではオーバーレイとして扱う） */
             #hover-preview { 
-                width: 70vw; height: auto; 
-                top: 50% !important; left: 50% !important; 
-                transform: translate(-50%, -50%); pointer-events: none;
+                width: 100vw !important; height: 100vh !important; 
+                top: 0 !important; left: 0 !important; border: none; border-radius: 0;
+                transform: none; pointer-events: auto !important; /* タップ有効化 */
+                background: rgba(0,0,0,0.85); /* 背景暗転 */
+                display: flex; align-items: center; justify-content: center;
+                z-index: 9999;
             }
+            #hover-preview img {
+                width: auto; height: auto; max-width: 90vw; max-height: 80vh; 
+                border: 2px solid var(--accent); border-radius: 8px;
+            }
+            
             /* 下部ナビ */
             #mobile-nav {
                 display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 50px;
@@ -214,13 +235,15 @@
             .nav-btn:last-child { border-right: none; }
             .nav-btn.active { background: #1f6feb; color: #fff; }
 
-            /* ★スマホだけボタンを表示 */
+            /* スマホだけボタンを表示 */
             .mobile-deck-controls { display: block; }
         }
     </style>
 </head>
 <body>
-    <div id="hover-preview"><img id="preview-img" src=""></div>
+    <div id="hover-preview" onclick="closePreviewMobile()">
+        <img id="preview-img" src="" onclick="event.stopPropagation()"> <div id="preview-close-btn" onclick="closePreviewMobile()">×</div>
+    </div>
     
     <div id="file-overlay" class="overlay" style="display: none;">
         <h2 style="color:var(--accent);">Crystal Frontier System</h2>
@@ -348,7 +371,7 @@
             defaultStatMax: 99999
         };
 
-        let MASTER_DB = [], myDeck = [], simDeck = [], hoverTimer = null, autoHideTimer = null;
+        let MASTER_DB = [], myDeck = [], simDeck = [], hoverTimer = null;
         // PC/モバイル判定 (幅768px以下をモバイルとする)
         const isMobile = () => window.innerWidth <= 768;
 
@@ -444,36 +467,49 @@
             });
         }
 
+        // ★スマホ用プレビューを閉じる関数
+        function closePreviewMobile() {
+            const p = document.getElementById('hover-preview');
+            const btn = document.getElementById('preview-close-btn');
+            p.style.display = 'none';
+            btn.style.display = 'none';
+        }
+
         function enablePreview(el, src) {
-            el.onmouseenter = (e) => {
-                hoverTimer = setTimeout(() => {
+            if (isMobile()) {
+                // ★スマホ: タップで拡大表示（閉じるまで消えない）
+                el.onclick = (e) => {
                     const p = document.getElementById('hover-preview');
-                    document.getElementById('preview-img').src = src;
-                    p.style.display = 'block';
+                    const img = document.getElementById('preview-img');
+                    const btn = document.getElementById('preview-close-btn');
+                    
+                    img.src = src;
+                    p.style.display = 'flex'; // スマホ用CSSで全画面中央配置
                     p.style.opacity = '1';
-                    updatePreviewPos(e);
-
-                    // スマホなら3秒後に自動で消す
-                    if (isMobile()) {
-                        if (autoHideTimer) clearTimeout(autoHideTimer);
-                        autoHideTimer = setTimeout(() => {
-                            p.style.opacity = '0';
-                            setTimeout(() => { p.style.display = 'none'; }, 300); 
-                        }, 3000); 
-                    }
-
-                }, 300);
-            };
-            el.onmousemove = (e) => updatePreviewPos(e);
-            el.onmouseleave = () => { 
-                clearTimeout(hoverTimer); 
-                if (!isMobile()) {
+                    btn.style.display = 'flex';
+                    e.stopPropagation();
+                };
+            } else {
+                // ★PC: ホバーで追従表示
+                el.onmouseenter = (e) => {
+                    hoverTimer = setTimeout(() => {
+                        const p = document.getElementById('hover-preview');
+                        document.getElementById('preview-img').src = src;
+                        p.style.display = 'block';
+                        p.style.opacity = '1';
+                        updatePreviewPos(e);
+                    }, 300);
+                };
+                el.onmousemove = (e) => updatePreviewPos(e);
+                el.onmouseleave = () => { 
+                    clearTimeout(hoverTimer); 
                     document.getElementById('hover-preview').style.display = 'none'; 
-                }
-            };
+                };
+            }
         }
         
         function updatePreviewPos(e) {
+            if (isMobile()) return; // スマホでは位置計算しない
             const p = document.getElementById('hover-preview');
             const offset = 20; const pW = 320, pH = 448;
             let x = e.clientX + offset, y = e.clientY + offset;
@@ -633,7 +669,7 @@
                     subInfoHtml = infoParts.join(" | ");
                 }
 
-                // ★PCならクリックで追加、スマホならクリック無効(プレビューのみ)
+                // ★PCなら画像クリックで追加（スマホはプレビュー機能に任せるのでここには書かない）
                 const imgClickAction = mobile ? "" : `onclick="addToDeck('${safeName}')"`;
 
                 div.innerHTML = `
@@ -679,7 +715,7 @@
                 const div = document.createElement('div');
                 div.className = 'deck-item';
                 
-                // ★PCなら画像操作有効、スマホなら無効
+                // ★PCなら画像操作有効、スマホなら無効(プレビューのみ)
                 const imgAction = mobile ? "" : `onclick="addToDeck('${safeName}')" oncontextmenu="event.preventDefault(); removeFromDeck('${safeName}')"`;
                 
                 // ★スマホなら操作ボタンを表示
@@ -747,7 +783,17 @@
         function drawOne() {
             if (simDeck.length === 0) return; const card = simDeck.pop();
             const img = document.createElement('img'); img.src = `images/${card.fileName}`; img.className = 'play-card';
-            enablePreview(img, `images/${card.fileName}`); img.onclick = () => img.remove();
+            enablePreview(img, `images/${card.fileName}`); 
+            // マリガン画面はPCでもスマホでもクリックで消す挙動は共通でOKだが、スマホは拡大もしたい
+            // ただし現状のコードだとスマホは拡大優先、PCはクリックで削除になっている
+            if (!isMobile()) {
+                img.onclick = () => img.remove();
+            } else {
+                // スマホのマリガン画面：タップで拡大（削除ボタンを別途つけるか、拡大画面に削除機能つけるかだが、現状は「拡大優先」とする）
+                // ※マリガンでのカード削除は「盤面から取り除く」意味合いなので、ダブルタップか長押しにする手もあるが
+                // いったん「タップ＝拡大」の統一操作とする。
+            }
+            
             document.getElementById('play-area').appendChild(img); updateSimCount();
         }
         function updateSimCount() { document.getElementById('sim-deck-count').textContent = simDeck.length; }
