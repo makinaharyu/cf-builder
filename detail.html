@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カード詳細</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 800px;
+            gap: 20px;
+            background: #161b22;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+        }
+        .card-image {
+            max-width: 300px;
+            height: auto;
+            border-radius: 10px;
+        }
+        .card-info {
+            flex: 1;
+            min-width: 300px;
+        }
+        h1 { margin-top: 0; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #30363d; }
+        th { color: #8b949e; width: 30%; }
+        .back-btn {
+            margin-top: 20px;
+            display: inline-block;
+            color: #58a6ff;
+            text-decoration: none;
+        }
+        .error { color: #ff7b72; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="content" class="container">
+    <p>読み込み中...</p>
+</div>
+
+<script>
+    // CSVファイルのパス（index.htmlと同じ場所に置いてください）
+    const CSV_PATH = 'card_list.csv'; 
+
+    // URLからパラメータ(?name=xxx)を取得する関数
+    function getParam(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // CSVをパースしてオブジェクトの配列にする関数
+    function parseCSV(text) {
+        const lines = text.trim().split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        const result = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+            // カンマ区切りの処理（簡易版）
+            const currentline = lines[i].split(',');
+            if(currentline.length < headers.length) continue; 
+            
+            const obj = {};
+            for (let j = 0; j < headers.length; j++) {
+                obj[headers[j]] = currentline[j] ? currentline[j].trim() : '';
+            }
+            result.push(obj);
+        }
+        return result;
+    }
+
+    async function init() {
+        const targetName = getParam('name'); // URLからカード名を取得
+        const contentDiv = document.getElementById('content');
+
+        if (!targetName) {
+            contentDiv.innerHTML = '<p class="error">カード名が指定されていません。</p><a href="index.html" class="back-btn">検索に戻る</a>';
+            return;
+        }
+
+        try {
+            // CSVを読み込む
+            const response = await fetch(CSV_PATH);
+            if (!response.ok) throw new Error("CSVファイルが見つかりません");
+            
+            // 文字化け対策が必要な場合は TextDecoder などを使いますが、今回はUTF-8前提
+            const text = await response.text();
+            const cards = parseCSV(text);
+
+            // カード名で検索
+            const card = cards.find(c => c['カード名'] === targetName);
+
+            if (!card) {
+                contentDiv.innerHTML = `<p class="error">「${targetName}」というカードは見つかりませんでした。</p><a href="index.html" class="back-btn">検索に戻る</a>`;
+                return;
+            }
+
+            // 表示生成
+            let html = `
+                <div>
+                    <img src="images/${card['画像ファイル名']}" alt="${card['カード名']}" class="card-image" onerror="this.style.display='none'">
+                </div>
+                <div class="card-info">
+                    <h1>${card['カード名']}</h1>
+                    <table>
+            `;
+
+            // 項目を表示（補足と画像ファイル名以外）
+            const excludeKeys = ['補足', '画像ファイル名', 'カード名']; // 除外リスト
+            
+            for (const key in card) {
+                // 除外リストになく、かつデータが空でない場合に表示
+                if (!excludeKeys.includes(key) && card[key]) {
+                    html += `<tr><th>${key}</th><td>${card[key]}</td></tr>`;
+                }
+            }
+
+            html += `
+                    </table>
+                    <a href="index.html" class="back-btn">
