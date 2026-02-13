@@ -90,6 +90,7 @@
             const effectKeys = ['効果1', '効果2', '効果3', '効果4'];
             
             const yomi = card['読み'] || '';
+            // 効果スロットがすべて空またはハイフンの場合をバニラと判定
             const isVanilla = effectKeys.every(key => !card[key] || card[key] === '-');
             
             let tableRows = '';
@@ -97,23 +98,27 @@
                 if (excludeKeys.includes(key)) continue;
 
                 const val = card[key];
-                if (!val) continue;
 
+                // --- 表示判定ロジックの修正 ---
                 if (effectKeys.includes(key)) {
                     if (isVanilla) {
+                        // バニラカードの場合、最初の効果スロットのタイミングで「なし」を表示
                         if (key === effectKeys[0]) {
-                            // "なし" は置換対象がないのでそのまま出力
                             tableRows += `<tr><th>効果</th><td>なし</td></tr>`;
                         }
-                        continue;
-                    } else {
-                        if (val === '-') continue;
+                        continue; // 残りの効果スロットはスキップ
                     }
+                    // 効果があるカードの場合、空欄やハイフンの項目は表示しない
+                    if (!val || val === '-') continue;
+                } else {
+                    // ATK, HP, タイプ, ユニット等の一般項目
+                    // 空欄、もしくはハイフンの場合は項目自体を表示しない
+                    if (!val || val === '-') continue;
                 }
+                // ----------------------------
 
-                // ここでテキスト置換処理を適用
+                // テキスト置換処理を適用
                 const formattedVal = formatText(val);
-
                 tableRows += `<tr><th>${key}</th><td>${formattedVal}</td></tr>`;
             }
             
@@ -139,4 +144,3 @@
 </script>
 </body>
 </html>
-
