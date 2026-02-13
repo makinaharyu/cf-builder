@@ -41,7 +41,7 @@
             margin: 0; padding: 0; overflow: hidden; font-size: 13px;
             touch-action: manipulation; width: 100%; height: 100dvh;
             
-            /* ★修正1: Flexboxレイアウトにして、ナビゲーションとメイン画面を縦に並べる */
+            /* Flexboxレイアウト：ナビゲーションとメイン画面を縦に並べる */
             display: flex;
             flex-direction: column;
         }
@@ -49,15 +49,14 @@
         :root { --card-w: var(--card-w-pc); --card-h: var(--card-h-pc); }
 
         /* レイアウト */
-        /* ★修正2: height:100dvh を削除し、残りの高さを埋める設定に変更 */
         .screen { 
             display: none; 
-            /* height: 100dvh;  <-- 削除 */
-            flex-grow: 1;      /* ★追加: 残りのスペースを埋める */
-            height: auto;      /* ★追加 */
-            min-height: 0;     /* ★追加: 子要素のスクロールを正しく機能させるために必須 */
+            flex-grow: 1;      /* 残りのスペースを埋める */
+            height: auto;
+            min-height: 0;     /* 子要素のスクロールを正しく機能させる */
             width: 100%; 
             flex-direction: row; 
+            overflow: hidden;  /* はみ出し防止 */
         }
         .active { display: flex; }
         
@@ -178,12 +177,16 @@
             :root { --card-w: var(--card-w-mob); --card-h: var(--card-h-mob); }
             .play-card { width: var(--card-w-mob); height: var(--card-h-mob); }
             
-            /* スマホの場合は既存のレイアウトロジックを維持 (100dvh - 下部メニュー50px) */
-            /* flex:1で伸びてしまうと計算がずれる可能性があるため、再度明示的に指定 */
+            /* ★修正: スマホ表示の高さ計算ロジックを変更 */
             .screen { 
                 flex-direction: column; 
-                height: calc(100dvh - 50px); 
-                flex-grow: 0; /* PC用のflex-growをリセット */
+                /* height: calc(100dvh - 50px); ←削除（固定だと上部メニュー分ずれるため） */
+                height: auto;
+                flex-grow: 1; /* 残りのスペースを埋める */
+                
+                /* ★重要: 下部固定メニュー（50px）＋iPhoneのセーフエリア分の余白を内側に確保 */
+                padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+                width: 100%;
             }
             
             .left-pane, .right-pane { width: 100% !important; max-width: 100% !important; height: 100%; display: none; padding: 15px 5px 5px 5px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); box-sizing: border-box; }
