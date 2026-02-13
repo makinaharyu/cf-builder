@@ -157,6 +157,22 @@ function executeGlobalSearch() {
     });
 }
 
+/**
+ * テキスト内の (1) や (赤) などを画像アイコンに変換する
+ */
+function formatEffect(text) {
+    if (!text) return "";
+    // 全角括弧を半角に統一
+    let normalized = text.replace(/（/g, '(').replace(/）/g, ')');
+    // 括弧内（1〜15文字）を画像タグに置換
+    // main/rulebook/ から見て main/images/icons/ なのでパスは ../images/icons/
+    return normalized.replace(/\(([^)]{1,15})\)/g, (match, content) => {
+        const cleanContent = content.trim();
+        const safeMatch = match.replace(/"/g, '&quot;');
+        return `<img src="../images/icons/${cleanContent}.png" class="inline-icon" alt="${safeMatch}" onerror="this.style.display='none';this.insertAdjacentText('afterend','${safeMatch}')">`;
+    });
+}
+
 // --- データ描画 ---
 function renderData(data, showCategory = false) {
     const container = document.getElementById('data-container');
@@ -171,8 +187,6 @@ function renderData(data, showCategory = false) {
         const name = item['種類・領域'] || item['項目名'] || item['用語名'] || item['能力語'] || item['能力名'] || item['処理名'] || item['カウンター名'];
         const desc = item['解説'] || item['ルール内容'];
         
-        // 補足は表示しないため取得しない
-
         // 項目名か解説のどちらかがあれば表示
         if (name || desc) {
             const card = document.createElement('div');
@@ -183,11 +197,11 @@ function renderData(data, showCategory = false) {
                 ? `<span class="category-tag">${item._categoryName}</span>` 
                 : '';
 
-            // 見出しがある場合のみ h3
+            // 見出し
             const titleHtml = name ? `<h3>${name}</h3>` : '';
             
-            // 本文がある場合のみ p
-            const descHtml = desc ? `<p>${desc}</p>` : '';
+            // 本文（ここで formatEffect を適用してアイコン化する）
+            const descHtml = desc ? `<p>${formatEffect(desc)}</p>` : '';
 
             card.innerHTML = `
                 ${categoryHtml}
