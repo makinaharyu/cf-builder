@@ -15,7 +15,11 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #30363d; }
         th { color: #8b949e; width: 30%; font-weight: normal; }
-        td { color: #fff; font-weight: bold; white-space: pre-wrap; }
+        td { color: #fff; font-weight: bold; white-space: pre-wrap; line-height: 1.6; } /* アイコン用にline-height調整 */
+        
+        /* アイコン用スタイル追加 */
+        .inline-icon { height: 1.2em; width: auto; vertical-align: text-bottom; margin: 0 2px; display: inline-block; }
+
         .back-btn { margin-top: 20px; display: inline-block; color: #58a6ff; text-decoration: none; border: 1px solid #30363d; padding: 10px 20px; border-radius: 6px; background: #21262d; }
         .back-btn:hover { background: #30363d; }
         .error { color: #ff7b72; font-weight: bold; }
@@ -35,7 +39,6 @@
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
-            // カンマ区切り（ダブルクォート内のカンマは無視）
             const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
             if(cells.length < headers.length) continue;
             const obj = {};
@@ -47,6 +50,20 @@
             result.push(obj);
         }
         return result;
+    }
+
+    // テキスト内の(1)や(赤)などを画像タグに変換する関数
+    function formatText(text) {
+        if (!text) return "";
+        // 全角括弧を半角に正規化
+        let normalized = text.replace(/（/g, '(').replace(/）/g, ')');
+        // 括弧内の文字列を抽出して画像パスに置換
+        return normalized.replace(/\(([^)]{1,15})\)/g, (match, content) => {
+            const cleanContent = content.trim();
+            const safeMatch = match.replace(/"/g, '&quot;');
+            // index.htmlと同様のパス構成を使用
+            return `<img src="images/icons/${cleanContent}.png" class="inline-icon" alt="${safeMatch}" onerror="this.style.display='none';this.insertAdjacentText('afterend','${safeMatch}')">`;
+        });
     }
 
     async function init() {
@@ -68,47 +85,37 @@
                 return;
             }
 
-            // 除外する項目（読みを追加）
             const excludeKeys = ['補足', '画像ファイル名', 'カード名', 'ID', '読み'];
-            // 効果のカラム名定義
             const effectKeys = ['効果1', '効果2', '効果3', '効果4'];
             
-            // 読みデータを取得
             const yomi = card['読み'] || '';
-
-            // 効果がすべてハイフンかどうかの判定
             const isVanilla = effectKeys.every(key => !card[key] || card[key] === '-');
             
             let tableRows = '';
             for (const key in card) {
-                // 除外キーに含まれる場合はスキップ
                 if (excludeKeys.includes(key)) continue;
 
                 const val = card[key];
-                
-                // 値がない場合はスキップ
                 if (!val) continue;
 
-                // 効果カラムの特殊処理
                 if (effectKeys.includes(key)) {
                     if (isVanilla) {
-                        // 全てハイフンの場合、最初の効果キー（効果1）のタイミングで「効果：なし」を出力
                         if (key === effectKeys[0]) {
+                            // "なし" は置換対象がないのでそのまま出力
                             tableRows += `<tr><th>効果</th><td>なし</td></tr>`;
                         }
-                        // それ以外の効果キー、または既に「なし」を出力済みの場合は何もしない
                         continue;
                     } else {
-                        // 通常の場合、値がハイフンなら表示しない
                         if (val === '-') continue;
                     }
                 }
 
-                // 通常出力
-                tableRows += `<tr><th>${key}</th><td>${val}</td></tr>`;
+                // ここでテキスト置換処理を適用
+                const formattedVal = formatText(val);
+
+                tableRows += `<tr><th>${key}</th><td>${formattedVal}</td></tr>`;
             }
             
-            // 画像ファイル名の処理（拡張子補完）
             let imgName = card['画像ファイル名'] || '';
             if(imgName && !imgName.includes('.')) imgName += '.png';
 
