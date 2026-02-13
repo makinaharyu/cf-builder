@@ -236,6 +236,13 @@
             }
         }
         /* === ここまで：上部ナビゲーションバーのスタイル === */
+
+        /* ★追加：target="_blank" があるリンクの後ろに矢印を自動で付ける */
+        a[target="_blank"]::after {
+            content: " ↗";
+            font-weight: bold;
+            margin-left: 2px;
+        }
     </style>
 </head>
 <body>
@@ -243,7 +250,7 @@
         <div class="nav-brand">Crystal Frontier Database</div>
         
         <div class="nav-links">
-            <a href="rulebook/index.html" target="_blank">ルールブック ↗</a>
+            <a href="rulebook/index.html" target="_blank">ルールブック</a>
         </div>
     </nav>
     <div id="hover-preview" onclick="closePreviewMobile()">
@@ -780,6 +787,3 @@
     </script>
 </body>
 </html>
-
-
-
