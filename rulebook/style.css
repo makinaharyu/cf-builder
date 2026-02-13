@@ -1,10 +1,11 @@
 :root {
     --bg-color: #0b0f19;
     --sidebar-color: #111827;
-    --accent-color: #38bdf8; /* クリスタル・ブルー */
+    --accent-color: #38bdf8;
     --text-color: #e2e8f0;
-    --card-bg: rgba(30, 41, 59, 0.7);
+    --card-bg: rgba(30, 41, 59, 0.8); /* 少し不透明度を上げました */
     --border-color: rgba(56, 189, 248, 0.3);
+    --header-height: 60px; /* スマホ用ヘッダーの高さ */
 }
 
 body {
@@ -12,15 +13,16 @@ body {
     font-family: 'Helvetica Neue', Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    overflow: hidden;
+    /* overflow: hidden; PCでのスクロールロックは維持 */
 }
 
 .app-container {
     display: flex;
     height: 100vh;
+    position: relative;
 }
 
-/* サイドバー */
+/* --- サイドバー (PCデフォルト) --- */
 .sidebar {
     width: 260px;
     background-color: var(--sidebar-color);
@@ -28,6 +30,10 @@ body {
     padding: 20px;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    z-index: 1000;
+    transition: transform 0.3s ease; /* スライドのアニメーション */
 }
 
 .logo {
@@ -37,7 +43,6 @@ body {
     letter-spacing: 2px;
     margin-bottom: 30px;
 }
-
 .logo span { color: #fff; }
 
 nav ul { list-style: none; padding: 0; }
@@ -48,26 +53,24 @@ nav a {
     font-size: 0.9rem;
     transition: 0.3s;
     display: block;
-    padding: 8px;
+    padding: 10px; /* タップしやすいように少し広げる */
     border-radius: 4px;
 }
-
 nav a:hover {
     background: var(--border-color);
     color: var(--accent-color);
 }
 
-/* メインコンテンツ */
+/* --- コンテンツエリア --- */
 .content {
     flex: 1;
     padding: 40px;
     overflow-y: auto;
+    height: 100vh;
+    box-sizing: border-box;
 }
 
 .content-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 30px;
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 10px;
@@ -80,9 +83,12 @@ nav a:hover {
     padding: 8px 15px;
     border-radius: 20px;
     outline: none;
+    width: 100%; /* スマホで見切れさせない */
+    max-width: 300px;
+    box-sizing: border-box;
 }
 
-/* データカードのデザイン */
+/* カードデザイン */
 .rule-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -93,17 +99,120 @@ nav a:hover {
     backdrop-filter: blur(5px);
     animation: fadeIn 0.5s ease;
 }
-
 .rule-card h3 {
     margin-top: 0;
     color: var(--accent-color);
-    font-size: 1.1rem;
 }
-
 .rule-card p {
     line-height: 1.6;
-    font-size: 0.95rem;
-    white-space: pre-wrap; /* 改行を反映 */
+    white-space: pre-wrap;
+}
+
+/* --- スマホ用パーツ（PCでは隠す） --- */
+.mobile-header, .close-btn, .overlay {
+    display: none;
+}
+
+/* =========================================
+   スマホ対応 (画面幅 768px以下)
+   ========================================= */
+@media screen and (max-width: 768px) {
+    body {
+        overflow: auto; /* スマホでは全体スクロールを許可 */
+    }
+
+    .app-container {
+        flex-direction: column;
+        height: auto;
+        padding-top: var(--header-height); /* ヘッダー分空ける */
+    }
+
+    /* スマホ用ヘッダー表示 */
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        height: var(--header-height);
+        background: var(--sidebar-color);
+        border-bottom: 1px solid var(--border-color);
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 900;
+        box-sizing: border-box;
+    }
+    
+    #menu-toggle {
+        background: none;
+        border: none;
+        color: var(--accent-color);
+        font-size: 1.8rem;
+        cursor: pointer;
+    }
+
+    .mobile-logo {
+        color: #fff;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    /* サイドバーを隠してスライド式に */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 280px;
+        transform: translateX(-100%); /* 画面外へ飛ばす */
+        box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    }
+
+    .sidebar.active {
+        transform: translateX(0); /* 出現 */
+    }
+
+    /* 閉じるボタン */
+    .close-btn {
+        display: block;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 2rem;
+        cursor: pointer;
+    }
+
+    /* オーバーレイ（背景を暗くする） */
+    .overlay {
+        display: none; /* JSでblockにする */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(2px);
+        z-index: 950;
+    }
+    .overlay.active {
+        display: block;
+    }
+
+    /* コンテンツ調整 */
+    .content {
+        padding: 20px;
+        height: auto; /* 高さを自動に */
+    }
+
+    .content-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
 }
 
 @keyframes fadeIn {
