@@ -154,7 +154,7 @@
 </head>
 <body>
     <div id="hover-preview"><img id="preview-img" src=""></div>
-    <div id="file-overlay" class="overlay">
+    <div id="file-overlay" class="overlay" style="display: none;">
         <h2 style="color:var(--accent);">Crystal Frontier System</h2>
         <input type="file" id="csv-file" accept=".csv" style="margin-bottom: 20px;">
         <div style="display: flex; gap: 10px;">
@@ -588,4 +588,5 @@
         function copyRecipe() { let txt = myDeck.map(d => `${d.name} x${d.count}`).join("\n"); navigator.clipboard.writeText(txt).then(() => alert("コピーしました！")); }
     </script>
 </body>
+
 </html>
