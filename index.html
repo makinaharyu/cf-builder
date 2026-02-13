@@ -184,74 +184,6 @@
     </style>
 </head>
 <body>
-    <nav class="global-nav">
-        <div class="nav-brand">Crystal Frontier Database</div>
-        <div class="nav-links">
-            <a href="rulebook/index.html" target="_blank" class="nav-btn">📖 ルールブック</a>
-        </div>
-    </nav>
-
-    <div class="container">
-        ```
-### 2. CSSの追加 (`<style>`内、またはCSSファイルの末尾に追加)
-
-既存のデザイン（ダークテーマ）に合わせたスタイルです。
-
-```css
-/* --- グローバルナビゲーション (最上部の帯) --- */
-.global-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #1a1a1a; /* ヘッダーより少し暗い色で区別 */
-    padding: 10px 20px;
-    border-bottom: 1px solid #333;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    color: #e0e0e0;
-}
-
-.nav-brand {
-    font-weight: bold;
-    font-size: 1.1rem;
-    letter-spacing: 1px;
-    color: var(--primary-color, #4a90e2); /* 既存のテーマ色があれば使う */
-}
-
-.nav-links a {
-    color: #e0e0e0;
-    text-decoration: none;
-    font-size: 0.95rem;
-    padding: 5px 10px;
-    border-radius: 4px;
-    transition: background 0.3s;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px; /* アイコンと文字の間隔 */
-}
-
-.nav-links a:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-/* --- スマホ対応 (画面幅 600px以下) --- */
-@media (max-width: 600px) {
-    .global-nav {
-        padding: 8px 15px; /* 余白を詰める */
-    }
-
-    .nav-brand {
-        font-size: 0.9rem; /* 文字サイズを少し小さく */
-    }
-
-    .nav-links a {
-        font-size: 0.85rem;
-        padding: 4px 8px;
-        background-color: rgba(255, 255, 255, 0.05); /* ボタンっぽさを出す */
-        border: 1px solid #444;
-    }
-}
-
     <div id="hover-preview" onclick="closePreviewMobile()">
         <img id="preview-img" src="" onclick="event.stopPropagation()"> <div id="preview-close-btn" onclick="closePreviewMobile()">×</div>
     </div>
@@ -786,5 +718,4 @@
     </script>
 </body>
 </html>
-
 
