@@ -6,13 +6,15 @@ const fileMap = [
     { file: 'abilities.csv', name: '能力語' },
     { file: 'keywords.csv', name: 'キーワード能力' },
     { file: 'processes.csv', name: 'キーワード処理' },
-    { file: 'counters.csv', name: 'カウンター' }
+    { file: 'counters.csv', name: 'カウンター' },
+    // 新しく追加するファイル（Tipsなど）もここに書くと全検索の対象になります
+    { file: 'otherrules.csv', name: 'その他のルール' }
 ];
 
 let currentData = []; // 現在表示中のページのデータ
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ハンバーガーメニュー等の処理は既存のまま
+    // ハンバーガーメニュー等の処理
     const menuToggle = document.getElementById('menu-toggle');
     const menuClose = document.getElementById('menu-close');
     const sidebar = document.getElementById('sidebar');
@@ -39,8 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadPage(fileName, title) {
     // UIのリセット
     document.getElementById('page-title').innerText = title;
-    document.getElementById('localSearchInput').value = ''; // ページ内検索クリア
-    document.getElementById('localSearchInput').style.display = 'inline-block'; // ページ内検索を表示
+    const localInput = document.getElementById('localSearchInput');
+    if(localInput) {
+        localInput.value = ''; // ページ内検索クリア
+        localInput.style.display = 'inline-block'; // ページ内検索を表示
+    }
     
     const container = document.getElementById('data-container');
     container.innerHTML = '<p>Loading...</p>';
@@ -62,7 +67,8 @@ function loadPage(fileName, title) {
 // --- ホームリセット機能 ---
 function resetHome() {
     document.getElementById('page-title').innerText = 'Welcome to Adamaster\'s Guide';
-    document.getElementById('localSearchInput').style.display = 'none'; // ホームではページ内検索を隠す
+    const localInput = document.getElementById('localSearchInput');
+    if(localInput) localInput.style.display = 'none'; // ホームではページ内検索を隠す
     
     const container = document.getElementById('data-container');
     container.innerHTML = `
@@ -72,7 +78,6 @@ function resetHome() {
         </div>
     `;
     
-    // メニューが開いていれば閉じる（スマホ用）
     window.closeMenu();
 }
 
@@ -98,7 +103,6 @@ function executeGlobalSearch() {
     const query = document.getElementById('globalSearchInput').value.toLowerCase();
     if (!query) return;
 
-    // スマホメニューが開いていたら閉じる
     window.closeMenu();
 
     const container = document.getElementById('data-container');
@@ -106,10 +110,9 @@ function executeGlobalSearch() {
     const localInput = document.getElementById('localSearchInput');
 
     titleEl.innerText = `全検索結果: "${query}"`;
-    localInput.style.display = 'none'; // 全検索時はページ内検索を隠す
+    if(localInput) localInput.style.display = 'none';
     container.innerHTML = '<p>Searching all crystals...</p>';
 
-    // すべてのCSVを非同期で読み込むPromise配列を作成
     const promises = fileMap.map(item => {
         return new Promise((resolve) => {
             Papa.parse(`./data/${item.file}`, {
@@ -117,35 +120,33 @@ function executeGlobalSearch() {
                 header: true,
                 skipEmptyLines: true,
                 complete: (results) => {
-                    // データに「カテゴリ名」を付与して返す
                     const labeledData = results.data.map(row => ({
                         ...row,
-                        _categoryName: item.name // 表示用にカテゴリ名を埋め込む
+                        _categoryName: item.name
                     }));
                     resolve(labeledData);
                 },
-                error: () => resolve([]) // エラーでも止まらないように空配列を返す
+                error: () => resolve([])
             });
         });
     });
 
-    // 全ファイルの読み込み完了を待つ
     Promise.all(promises).then(allFilesData => {
-        // 配列の配列をフラットにする（[Array, Array] -> [Obj, Obj...]）
         const flatData = allFilesData.flat();
 
-        // クエリでフィルタリング
         const filtered = flatData.filter(item => {
+            // 検索対象のカラム定義
             const name = item['種類・領域'] || item['項目名'] || item['用語名'] || item['能力語'] || item['能力名'] || item['処理名'] || item['カウンター名'] || '';
-            const desc = item['解説'] || '';
+            const desc = item['解説'] || item['ルール内容'] || ''; // 'ルール内容'も検索対象に
+            
             return name.toLowerCase().includes(query) || desc.toLowerCase().includes(query);
         });
 
-        renderData(filtered, true); // 第2引数 true でカテゴリタグを表示モードに
+        renderData(filtered, true);
     });
 }
 
-// --- データ描画 ---
+// --- データ描画（修正版） ---
 function renderData(data, showCategory = false) {
     const container = document.getElementById('data-container');
     container.innerHTML = '';
@@ -156,27 +157,36 @@ function renderData(data, showCategory = false) {
     }
 
     data.forEach(item => {
+        // 項目名（見出し）のカラム
         const name = item['種類・領域'] || item['項目名'] || item['用語名'] || item['能力語'] || item['能力名'] || item['処理名'] || item['カウンター名'];
-        const desc = item['解説'];
         
-        if (name) {
+        // 解説（本文）のカラム：'ルール内容'もここに追加
+        const desc = item['解説'] || item['ルール内容'];
+        
+        // 【修正】補足はあえて読み込まない（表示しないため）
+        // const note = item['補足']; 
+
+        // 項目名か解説のどちらかがあれば表示する
+        if (name || desc) {
             const card = document.createElement('div');
             card.className = 'rule-card';
             
-            // 全検索時はカテゴリ名（どのファイルのルールか）を表示する
+            // カテゴリタグ（全検索時のみ）
             const categoryHtml = showCategory && item._categoryName 
                 ? `<span class="category-tag">${item._categoryName}</span>` 
                 : '';
 
-            const note = item['補足'] 
-                ? `<small style="display:block; margin-top:10px; color:#94a3b8;">※ ${item['補足']}</small>` 
-                : '';
+            // 見出しがある場合のみ h3 を生成
+            const titleHtml = name ? `<h3>${name}</h3>` : '';
+            
+            // 本文がある場合のみ p を生成
+            const descHtml = desc ? `<p>${desc}</p>` : '';
 
+            // 補足（note）はHTMLに含まない
             card.innerHTML = `
                 ${categoryHtml}
-                <h3>${name}</h3>
-                <p>${desc || ''}</p>
-                ${note}
+                ${titleHtml}
+                ${descHtml}
             `;
             container.appendChild(card);
         }
