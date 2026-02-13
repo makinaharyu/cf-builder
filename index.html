@@ -21,20 +21,20 @@
             --blue: #1f6feb;
         }
 
-        /* ズーム防止 & 全体設定 */
+        /* 全体設定 */
         body { 
             font-family: "Helvetica Neue", Arial, sans-serif; 
             background: var(--bg); color: var(--text); 
             margin: 0; padding: 0; overflow: hidden; font-size: 13px;
             touch-action: manipulation; 
             width: 100%;
-            height: 100dvh; /* 動的ビューポート高さ */
+            height: 100dvh;
         }
         
         /* レイアウト */
         .screen { 
             display: none; 
-            height: 100dvh; /* 修正: スマホのアドレスバー考慮 */
+            height: 100dvh; 
             width: 100%; 
             flex-direction: row; 
         }
@@ -123,10 +123,10 @@
         
         .card-info { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
         
-        .info-header { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; margin-bottom: 2px; }
-        .card-name { font-weight: bold; color: #fff; font-size: 14px; margin-bottom: 2px; }
+        .info-header { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; margin-bottom: 2px; min-width: 0; }
+        .card-name { font-weight: bold; color: #fff; font-size: 14px; margin-bottom: 2px; white-space: nowrap; }
         
-        .card-sub { font-size: 11px; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: flex; align-items: center; gap: 6px; }
+        .card-sub { font-size: 11px; color: #8b949e; white-space: nowrap; max-width: 100%; display: flex; align-items: center; gap: 6px; }
         
         .stat-emphasis {
             font-family: "Impact", "Arial Black", sans-serif;
@@ -134,6 +134,7 @@
             color: #fff;
             letter-spacing: 0.5px;
             margin-right: 4px;
+            flex-shrink: 0;
         }
 
         /* 効果テキストエリア */
@@ -155,11 +156,8 @@
             border: 1px solid #fff; border-radius: 4px; object-fit: cover; transition: 0.1s;
             touch-action: manipulation;
         }
-        .deck-item img:hover { border-color: var(--accent); opacity: 0.9; }
-        .deck-item img:active { transform: scale(0.98); }
         .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: #fff; width: 22px; height: 22px; line-height: 22px; border-radius: 50%; font-weight: bold; text-align: center; border: 2px solid #fff; z-index: 10; font-size: 11px; pointer-events: none; }
         
-        /* スマホ用デッキ操作ボタン */
         .mobile-deck-controls {
             display: none; 
             position: absolute; bottom: 0; left: 0; width: 100%; height: 30px; z-index: 20;
@@ -170,9 +168,7 @@
             touch-action: manipulation;
         }
         .ctrl-btn.minus { background: rgba(200, 50, 50, 0.8); }
-        .ctrl-btn.minus:active { background: rgb(255, 0, 0); }
         .ctrl-btn.plus { background: rgba(50, 200, 50, 0.8); }
-        .ctrl-btn.plus:active { background: rgb(0, 255, 0); }
 
         .play-card { width: 120px; height: 168px; border: 2px solid #fff; border-radius: 6px; background: #000; animation: drawAnim 0.3s ease-out; cursor: help; touch-action: manipulation; }
         
@@ -183,8 +179,6 @@
             overflow: hidden; transition: opacity 0.3s; 
         }
         #hover-preview img { width: 100%; height: 100%; object-fit: contain; }
-
-        /* スマホ拡大時の閉じるボタン */
         #preview-close-btn {
             display: none; position: absolute; top: 5px; left: 5px; z-index: 10000;
             width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.8);
@@ -213,23 +207,33 @@
             }
             .play-card { width: 75px; height: 105px; }
 
-            /* 修正: dvh単位を適用し、画面外への突き抜けを防止 */
             .screen { 
                 flex-direction: column; 
                 height: calc(100dvh - 50px); 
             }
             
-            /* 修正: padding-top のフォールバックとセーフエリアを統合 */
             .left-pane, .right-pane { 
                 width: 100% !important; max-width: 100% !important; 
                 height: 100%; 
                 display: none; 
-                padding: 15px 5px 5px 5px; /* 上部パディングを少し増やしてフォールバック */
+                padding: 15px 5px 5px 5px; 
                 padding-top: calc(10px + env(safe-area-inset-top, 0px)); 
                 box-sizing: border-box;
             }
             .left-pane.active-pane, .right-pane.active-pane { display: flex; }
             .gutter { display: none !important; }
+
+            /* ★追加: スマホで長いテキストを横スクロール可能にする設定 */
+            .card-name, .card-sub {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none; /* Firefox */
+            }
+            .card-name::-webkit-scrollbar, .card-sub::-webkit-scrollbar {
+                display: none; /* Chrome/Safari */
+            }
 
             #advanced-filters { display: none; border-top: none; margin-top: -5px; }
             #filter-toggle-btn {
@@ -264,7 +268,6 @@
                 touch-action: manipulation;
             }
             .nav-btn.active { background: #1f6feb; color: #fff; }
-
             .mobile-deck-controls { display: block; }
         }
     </style>
@@ -313,7 +316,11 @@
                 </div>
 
                 <label>コスト</label>
-                <div class="range-box"><input type="number" id="q-cost-min" placeholder="0" oninput="filterCards()"><span>~</span><input type="number" id="q-cost-min" placeholder="∞" oninput="filterCards()"></div>
+                <div class="range-box">
+                    <input type="number" id="q-cost-min" placeholder="0" oninput="filterCards()">
+                    <span>~</span>
+                    <input type="number" id="q-cost-max" placeholder="∞" oninput="filterCards()">
+                </div>
                 
                 <label>レアリティ (複数選択可)</label>
                 <div class="check-group" id="grp-rare">
@@ -574,7 +581,7 @@
                 if (q.rares.length > 0 && !q.rares.some(r => c.rarity === r)) return false;
                 if (c.costTotal < q.cMin || c.costTotal > q.cMax) return false;
                 if (c.atk < q.aMin || c.atk > q.aMax) return false;
-                if (c.hp < q.hMin || c.hp > q.hp-max) return false;
+                if (c.hp < q.hMin || c.hp > q.hMax) return false; // ★修正: hp-maxのタイポ修正
                 return true;
             });
             const sortKey = document.getElementById('q-sort-key').value;
