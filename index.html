@@ -160,7 +160,7 @@
         
         @keyframes drawAnim { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* 追加：ナビゲーションバッジのスタイル */
+        /* ナビゲーションバッジのスタイル */
         .nav-badge {
             display: inline-block;
             background: #ffffff;
@@ -544,7 +544,6 @@
             });
             const total = myDeck.reduce((acc, d) => acc + d.count, 0);
             document.getElementById('total-count').textContent = total;
-            // 追加：モバイルナビのバッジも更新
             document.getElementById('mobile-deck-count').textContent = total;
         }
 
@@ -554,6 +553,8 @@
                 el.onclick = (e) => {
                     const p = document.getElementById('hover-preview');
                     document.getElementById('preview-img').src = src;
+                    // 追加：スマホ版では閉じるボタンを表示する
+                    document.getElementById('preview-close-btn').style.display = 'block';
                     p.style.display = 'flex';
                     e.stopPropagation();
                 };
@@ -579,7 +580,11 @@
             p.style.left = Math.max(0, x) + 'px'; p.style.top = Math.max(0, y) + 'px';
         }
 
-        function closePreviewMobile() { document.getElementById('hover-preview').style.display = 'none'; }
+        function closePreviewMobile() { 
+            document.getElementById('hover-preview').style.display = 'none'; 
+            // 追加：閉じるボタンを非表示に戻す
+            document.getElementById('preview-close-btn').style.display = 'none';
+        }
 
         // UIユーティリティ
         function toggleFilters() {
