@@ -2,25 +2,31 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="robots" content="noindex, nofollow, noarchive, noimageai">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crystal Frontier - Official Rules</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Crystal Frontier - Official Rules</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
+    <div class="mobile-header">
+        <button id="menu-toggle" aria-label="メニューを開く">☰</button>
+        <span class="mobile-logo">Crystal Frontier</span>
+    </div>
+
     <div class="app-container">
-        <aside class="sidebar">
+        <div id="overlay" class="overlay"></div>
+
+        <aside class="sidebar" id="sidebar">
             <h1 class="logo">Crystal<span>Frontier</span></h1>
+            <button id="menu-close" class="close-btn">×</button> 
             <nav>
                 <ul>
-                    <li><a href="#" onclick="loadPage('cards.csv', 'カードの種類と領域')">カードの種類と領域</a></li>
-                    <li><a href="#" onclick="loadPage('turns.csv', 'ターンの流れ')">ターンの流れ</a></li>
-                    <li><a href="#" onclick="loadPage('terms.csv', '用語集')">用語集</a></li>
-                    <li><a href="#" onclick="loadPage('abilities.csv', '能力語')">能力語</a></li>
-                    <li><a href="#" onclick="loadPage('keywords.csv', 'キーワード能力')">キーワード能力</a></li>
-                    <li><a href="#" onclick="loadPage('processes.csv', 'キーワード処理')">キーワード処理</a></li>
-                    <li><a href="#" onclick="loadPage('counters.csv', 'カウンター')">カウンター</a></li>
+                    <li><a href="#" onclick="loadPage('cards.csv', 'カードの種類と領域'); closeMenu()">カードの種類と領域</a></li>
+                    <li><a href="#" onclick="loadPage('turns.csv', 'ターンの流れ'); closeMenu()">ターンの流れ</a></li>
+                    <li><a href="#" onclick="loadPage('terms.csv', '用語集'); closeMenu()">用語集</a></li>
+                    <li><a href="#" onclick="loadPage('abilities.csv', '能力語'); closeMenu()">能力語</a></li>
+                    <li><a href="#" onclick="loadPage('keywords.csv', 'キーワード能力'); closeMenu()">キーワード能力</a></li>
+                    <li><a href="#" onclick="loadPage('processes.csv', 'キーワード処理'); closeMenu()">キーワード処理</a></li>
+                    <li><a href="#" onclick="loadPage('counters.csv', 'カウンター'); closeMenu()">カウンター</a></li>
                 </ul>
             </nav>
         </aside>
