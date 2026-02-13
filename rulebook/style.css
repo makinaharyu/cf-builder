@@ -36,7 +36,7 @@ body {
     z-index: 1000;
     transition: transform 0.3s ease;
     flex-shrink: 0;
-    overflow-y: auto;
+    overflow-y: auto; /* スクロール許可 */
 }
 
 .logo {
@@ -268,10 +268,15 @@ nav a:hover {
         position: fixed;
         top: 0;
         left: 0;
+        /* スマホのアドレスバー対策でdvhを使用、非対応なら100vh */
         height: 100vh;
+        height: 100dvh; 
         width: 280px;
         transform: translateX(-100%);
         box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        /* 最後の要素が見切れないように下部に余白を追加 */
+        padding-bottom: 80px; 
+        overflow-y: auto; /* スクロールを確実にする */
     }
 
     .sidebar.active {
@@ -282,19 +287,23 @@ nav a:hover {
         display: none;
     }
 
-    /* 閉じるボタン (overlay内に移動したため位置調整) */
+    /* 閉じるボタン */
     .close-btn {
         display: block;
         position: absolute;
         top: 15px;
-        left: 290px; /* メニュー幅280px + 10px */
-        right: auto; /* 右寄せ解除 */
-        background: none;
-        border: none;
-        color: #fff;
-        font-size: 2rem;
+        /* メニュー幅(280px)と揃えることで隙間をなくす */
+        left: 280px; 
+        right: auto;
+        background: #111827; /* メニューと同じ色にして一体感を出す */
+        border: 1px solid var(--border-color);
+        border-left: none; /* 境界線を消して接続しているように見せる */
+        color: var(--accent-color);
+        font-size: 1.5rem;
         cursor: pointer;
         z-index: 1001;
+        padding: 5px 12px;
+        border-radius: 0 4px 4px 0; /* 右側だけ丸める */
     }
 
     .overlay {
