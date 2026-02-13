@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Crystal Frontier - Custom Builder</title>
+    <style>
+        /* =========================================
+           ★カスタマイズエリア (見た目の設定)
+           ========================================= */
+        :root {
+            --card-w: 110px;
+            --card-h: 154px;
+            --bg: #0d1117;
+            --panel: #161b22;
+            --accent: #f1c40f; /* 金色 */
+            --text: #c9d1d9;
+            --border: #30363d;
+            --green: #238636;
+            --red: #f85149;
+            --blue: #1f6feb;
+        }
+
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow: hidden; font-size: 13px; }
+        
+        /* レイアウト */
+        .screen { display: none; height: 100vh; width: 100vw; flex-direction: row; }
+        .active { display: flex; }
+        
+        /* ★変更: 左パネル (初期幅を指定、flex-shrink:0で勝手に縮まないようにする) */
+        .left-pane { 
+            width: 450px; 
+            min-width: 250px; 
+            max-width: 80vw;
+            border-right: none; /* 仕切り線に任せるため削除 */
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            box-sizing: border-box; 
+            flex-shrink: 0; 
+        }
+
+        /* ★追加: 仕切り線 (ドラッグ用ハンドル) */
+        .gutter {
+            width: 8px;
+            background: #21262d;
+            cursor: col-resize;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            transition: background 0.2s;
+            flex-shrink: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gutter:hover, .gutter.dragging { background: var(--accent); }
+        /* 仕切り線の真ん中に小さな飾りポッチ */
+        .gutter::after { content: "||"; color: #555; font-size: 9px; letter-spacing: -1px; }
+
+        /* ★変更: 右パネル (残りの幅を埋める) */
+        .right-pane { 
+            flex-grow: 1; 
+            min-width: 0; /* flexアイテムのはみ出し防止 */
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            box-sizing: border-box; 
+            background: #0d1117; 
+        }
+        
+        /* 検索・フィルター部分 */
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; background: var(--panel); padding: 8px; border-radius: 6px; border: 1px solid var(--border); }
+        .filter-grid label { grid-column: span 2; font-size: 10px; color: var(--accent); margin-top: 2px; font-weight: bold; }
+        input, select, textarea { background: #0d1117; color: #fff; border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; font-size: 12px; height: 26px; box-sizing: border-box; }
+        textarea { width: 100%; height: 80px; resize: none; margin-bottom: 10px; }
+        .range-box { display: flex; align-items: center; gap: 3px; }
+        .range-box input { width: 100%; }
+
+        /* チェックボックス設定 */
+        .check-group { display: flex; flex-wrap: wrap; gap: 4px; grid-column: span 2; margin-bottom: 4px; }
+        .check-label {
+            display: inline-block; cursor: pointer; font-size: 11px;
+            background: #21262d; border: 1px solid var(--border);
+            padding: 3px 8px; border-radius: 4px; color: var(--text); user-select: none; transition: 0.2s;
+        }
+        .check-label input { display: none; } 
+        .check-label:has(input:checked) { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+        /* スクロールエリア */
+        #search-results { flex-grow: 1; overflow-y: auto; background: #000; border: 1px solid var(--border); }
+        #deck-list { 
+            flex-grow: 1; overflow-y: auto; background: #000; padding: 10px; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, var(--card-w)); 
+            gap: 12px; align-content: start; 
+        }
+        #play-area { flex-grow: 1; overflow-y: auto; background: #0a2012; border-radius: 8px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px; padding: 20px; }
+
+        /* カード一覧のレイアウト */
+        .card-row { display: flex; padding: 6px; border-bottom: 1px solid var(--border); gap: 8px; background: #161b22; align-items: flex-start; }
+        .card-row:hover { background: #21262d; }
+        
+        .img-box { width: 50px; height: 70px; background: #222; border: 1px solid #444; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .img-box img { width: 100%; height: 100%; object-fit: contain; }
+        
+        .card-info { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        
+        .info-header { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; margin-bottom: 2px; }
+        .card-name { font-weight: bold; color: #fff; font-size: 14px; margin-bottom: 2px; }
+        
+        .card-sub { font-size: 11px; color: #8b949e; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+        
+        .stat-emphasis {
+            font-family: "Impact", "Arial Black", sans-serif;
+            font-size: 15px;
+            color: #fff;
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+        }
+
+        /* 効果テキストエリア */
+        .card-effect {
+            font-size: 11px; color: #ccc; line-height: 1.4;
+            background: rgba(0,0,0,0.3); padding: 4px; border-radius: 4px;
+            max-height: 48px; /* 約3行分 */
+            overflow-y: auto; /* はみ出たらスクロール */
+            white-space: pre-wrap; /* 改行を反映 */
+            border: 1px solid #30363d;
+        }
+        .card-effect::-webkit-scrollbar { width: 4px; }
+        .card-effect::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
+
+        .inline-icon { height: 1.1em; width: auto; vertical-align: text-bottom; margin: 0 1px; display: inline-block; }
+        .btn-add { height: 100%; align-self: center; }
+
+        /* デッキ・プレビュー等は変更なし */
+        .deck-item { position: relative; width: var(--card-w); cursor: pointer; }
+        .deck-item img { 
+            width: var(--card-w); height: var(--card-h); 
+            border: 1px solid #fff; border-radius: 4px; object-fit: cover; transition: 0.1s;
+        }
+        .deck-item img:hover { border-color: var(--accent); opacity: 0.9; }
+        .deck-item img:active { transform: scale(0.98); }
+        .badge { position: absolute; top: -6px; right: -6px; background: var(--red); color: #fff; width: 22px; height: 22px; line-height: 22px; border-radius: 50%; font-weight: bold; text-align: center; border: 2px solid #fff; z-index: 10; font-size: 11px; pointer-events: none; }
+        .play-card { width: 120px; height: 168px; border: 2px solid #fff; border-radius: 6px; background: #000; animation: drawAnim 0.3s ease-out; cursor: help; }
+        #hover-preview { position: fixed; z-index: 9999; pointer-events: none; display: none; background: #000; border: 3px solid var(--accent); border-radius: 10px; box-shadow: 0 0 30px rgba(0,0,0,0.9); width: 320px; height: 448px; overflow: hidden; }
+        #hover-preview img { width: 100%; height: 100%; object-fit: contain; }
+        
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: #fff; font-size: 12px; }
+        .btn-green { background: var(--green); } .btn-blue { background: var(--blue); } .btn-accent { background: var(--accent); color: #000; } .btn-red { background: var(--red); }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        @keyframes drawAnim { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div id="hover-preview"><img id="preview-img" src=""></div>
+    <div id="file-overlay" class="overlay">
+        <h2 style="color:var(--accent);">Crystal Frontier System</h2>
+        <input type="file" id="csv-file" accept=".csv" style="margin-bottom: 20px;">
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-green" onclick="loadFile('UTF-8')">UTF-8(推奨)</button>
+            <button class="btn btn-blue" onclick="loadFile('Shift-JIS')">Shift-JIS(Excel用)</button>
+        </div>
+    </div>
+
+    <div id="screen-builder" class="screen active">
+        <div class="left-pane" id="pane-l-build">
+            <div class="filter-grid">
+                <label>テキスト検索 (名前・タイプ・効果)</label>
+                <input type="text" id="q-text" placeholder="キーワード・読み(ひらがな)を入力..." oninput="filterCards()" style="grid-column: span 2;">
+                
+                <label>分類 (複数選択可)</label>
+                <div class="check-group" id="grp-cat">
+                    <label class="check-label"><input type="checkbox" value="01ユニット" onchange="filterCards()"> ユニット</label>
+                    <label class="check-label"><input type="checkbox" value="02マジック" onchange="filterCards()"> マジック</label>
+                    <label class="check-label"><input type="checkbox" value="フラッシュ" onchange="filterCards()"> フラッシュ</label>
+                    <label class="check-label"><input type="checkbox" value="エフェクト" onchange="filterCards()"> エフェクト</label>
+                    <label class="check-label"><input type="checkbox" value="オルガノン" onchange="filterCards()"> オルガノン</label>
+                </div>
+
+                <label>色 (複数選択可)</label>
+                <div class="check-group" id="grp-col">
+                    <label class="check-label"><input type="checkbox" value="赤" onchange="filterCards()"> 赤</label>
+                    <label class="check-label"><input type="checkbox" value="緑" onchange="filterCards()"> 緑</label>
+                    <label class="check-label"><input type="checkbox" value="青" onchange="filterCards()"> 青</label>
+                    <label class="check-label"><input type="checkbox" value="白" onchange="filterCards()"> 白</label>
+                    <label class="check-label"><input type="checkbox" value="黒" onchange="filterCards()"> 黒</label>
+                    <label class="check-label"><input type="checkbox" value="無" onchange="filterCards()"> 無</label>
+                    <label class="check-label"><input type="checkbox" value="多" onchange="filterCards()"> 多</label>
+                </div>
+
+                <label>コスト</label>
+                <div class="range-box"><input type="number" id="q-cost-min" placeholder="0" oninput="filterCards()"><span>~</span><input type="number" id="q-cost-max" placeholder="∞" oninput="filterCards()"></div>
+                
+                <label>レアリティ (複数選択可)</label>
+                <div class="check-group" id="grp-rare">
+                    <label class="check-label"><input type="checkbox" value="コモン" onchange="filterCards()"> C</label>
+                    <label class="check-label"><input type="checkbox" value="アンコモン" onchange="filterCards()"> UC</label>
+                    <label class="check-label"><input type="checkbox" value="レア" onchange="filterCards()"> R</label>
+                    <label class="check-label"><input type="checkbox" value="レジェンド" onchange="filterCards()"> L</label>
+                </div>
+                
+                <label>ATK / HP</label>
+                <div class="range-box"><input type="number" id="q-atk-min" placeholder="0" oninput="filterCards()"><span>~</span><input type="number" id="q-atk-max" placeholder="∞" oninput="filterCards()"></div>
+                <div class="range-box"><input type="number" id="q-hp-min" placeholder="0" oninput="filterCards()"><span>~</span><input type="number" id="q-hp-max" placeholder="∞" oninput="filterCards()"></div>
+                
+                <label>並び替え</label>
+                <div style="grid-column: span 2; display: flex; gap: 5px;">
+                    <select id="q-sort-key" onchange="filterCards()" style="flex: 2;">
+                        <option value="id">ID (登録順)</option>
+                        <option value="name">名前 (あいうえお順)</option>
+                        <option value="costTotal">コスト</option>
+                        <option value="atk">ATK (攻撃力)</option>
+                        <option value="hp">HP (体力)</option>
+                    </select>
+                    <select id="q-sort-dir" onchange="filterCards()" style="flex: 1;">
+                        <option value="1">昇順 (▲)</option>
+                        <option value="-1">降順 (▼)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="search-results"></div>
+        </div>
+        <div class="gutter" id="gutter-build"></div>
+        
+        <div class="right-pane">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                <h3 style="margin:0;">Deck: <span id="total-count" style="color:var(--accent);">0</span>枚</h3>
+                <div style="font-size:10px; color:#aaa;">(左クリック:追加 / 右クリック:削除)</div>
+                <button class="btn btn-accent" onclick="switchToMulligan()">一人回し ➔</button>
+            </div>
+            <div id="deck-list"></div>
+            <div style="margin-top:10px; display:flex; gap:10px;">
+                <button class="btn btn-blue" onclick="copyRecipe()">📋 コピー</button>
+                <button class="btn btn-red" onclick="if(confirm('Reset?')){myDeck=[];renderDeck();}">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-mulligan" class="screen">
+        <div class="left-pane" id="pane-l-mulligan">
+            <button class="btn btn-blue" onclick="switchToBuilder()" style="margin-bottom:10px;">↞ 構築へ戻る</button>
+            <textarea id="manual-input" placeholder="Name x4..."></textarea>
+            <div style="display: flex; gap: 5px; margin-bottom:10px;">
+                <button class="btn btn-green" style="flex:1" onclick="applyManualList()">適用</button>
+                <button class="btn btn-blue" onclick="document.getElementById('recipe-upload').click()">読込</button>
+                <input type="file" id="recipe-upload" accept=".txt" style="display:none;" onchange="handleRecipeUpload(event)">
+            </div>
+            <div class="filter-grid">
+                <label>設定</label>
+                初手枚数: <input type="number" id="hand-size" value="5" min="1" max="10">
+                <button class="btn btn-accent" style="grid-column:span 2; margin-top:10px;" onclick="initSim()">山札をシャッフルして開始</button>
+            </div>
+        </div>
+        <div class="gutter" id="gutter-mulligan"></div>
+
+        <div class="right-pane">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                <h3 style="margin:0;">Mulligan: 山札 <span id="sim-deck-count" style="color:var(--accent);">0</span>枚</h3>
+                <button class="btn btn-green" onclick="drawOne()">ドロー</button>
+            </div>
+            <div id="play-area"></div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            maxCardsInDeck: 4,
+            defaultHandSize: 7,
+            defaultCostMax: 999,
+            defaultStatMax: 99999
+        };
+
+        let MASTER_DB = [], myDeck = [], simDeck = [], hoverTimer = null;
+
+        // --- ★追加: リサイズ機能の初期化 と CSV自動読み込み ---
+        window.addEventListener('DOMContentLoaded', () => {
+           setupResizer('pane-l-build', 'gutter-build');
+           setupResizer('pane-l-mulligan', 'gutter-mulligan');
+
+            // ★追加：ページを開いた瞬間にサーバー上のCSVを読みに行く処理
+            fetch('card_list.csv')
+                .then(response => {
+                    if (!response.ok) throw new Error("CSVが見つかりません");
+                    return response.text();
+                })
+                .then(text => {
+                    parseCSV(text); // 読み込んだテキストを解析関数に渡す
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("カードデータの読み込みに失敗しました。\ncard_list.csv が同じ場所にあるか確認してください。");
+                });
+        });
+
+        function setupResizer(leftId, gutterId) {
+            const leftPane = document.getElementById(leftId);
+            const gutter = document.getElementById(gutterId);
+            let isDragging = false;
+
+            gutter.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                gutter.classList.add('dragging');
+                document.body.style.cursor = 'col-resize';
+                e.preventDefault(); // テキスト選択防止
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                // マウス位置に合わせて左パネルの幅を更新
+                // 最小幅(200px)などはCSSのmin-widthでも制御しているが、念のため計算にも含める
+                let newWidth = e.clientX;
+                if (newWidth < 200) newWidth = 200;
+                if (newWidth > window.innerWidth - 100) newWidth = window.innerWidth - 100;
+                
+                leftPane.style.width = newWidth + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    gutter.classList.remove('dragging');
+                    document.body.style.cursor = 'default';
+                }
+            });
+        }
+        // ----------------------------------
+
+        function enablePreview(el, src) {
+            el.onmouseenter = (e) => {
+                hoverTimer = setTimeout(() => {
+                    const p = document.getElementById('hover-preview');
+                    document.getElementById('preview-img').src = src;
+                    p.style.display = 'block';
+                    updatePreviewPos(e);
+                }, 300);
+            };
+            el.onmousemove = (e) => updatePreviewPos(e);
+            el.onmouseleave = () => { clearTimeout(hoverTimer); document.getElementById('hover-preview').style.display = 'none'; };
+        }
+        
+        function updatePreviewPos(e) {
+            const p = document.getElementById('hover-preview');
+            const offset = 20; const pW = 320, pH = 448;
+            let x = e.clientX + offset, y = e.clientY + offset;
+            if (x + pW > window.innerWidth) x = e.clientX - pW - offset;
+            if (y + pH > window.innerHeight) y = e.clientY - pH - offset;
+            p.style.left = Math.max(0, x) + 'px'; p.style.top = Math.max(0, y) + 'px';
+        }
+
+        function loadFile(enc) { const f=document.getElementById('csv-file').files[0]; if(!f)return; const r=new FileReader(); r.onload=(e)=>{ parseCSV(e.target.result); document.getElementById('file-overlay').style.display='none'; }; r.readAsText(f,enc); }
+        
+        function parseCSV(txt) {
+            const lines = txt.split(/\r?\n/);
+            MASTER_DB = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim(); if(!line) continue;
+                const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cells.length < 16) continue;
+                
+                const clean = (str) => {
+                    let s = (str || "").trim();
+                    if (s.startsWith('"') && s.endsWith('"')) {
+                        s = s.slice(1, -1).replace(/""/g, '"');
+                    }
+                    return s;
+                };
+
+                let fName = clean(cells[16]);
+                if (fName && !fName.includes(".")) fName += ".png";
+                
+                const name = clean(cells[0]);
+                const type = clean(cells[4]);
+                const category = clean(cells[3]);
+                const reading = clean(cells[17]); 
+                
+                const rawEffects = [cells[11], cells[12], cells[13], cells[14]];
+                const effect = rawEffects
+                    .map(t => clean(t))
+                    .filter(t => t !== "" && t !== "-" && t !== "‐")
+                    .join("\n");
+
+                const toHira = (str) => str.replace(/[\u30a1-\u30f6]/g, m => String.fromCharCode(m.charCodeAt(0) - 0x60));
+
+                const rawText = name + reading + type + category + effect;
+                const searchText = (rawText + toHira(rawText)).toLowerCase();
+
+                MASTER_DB.push({
+                    id: i,
+                    name: name,
+                    reading: reading, 
+                    color: clean(cells[1]), rarity: clean(cells[2]), category: category, type: type,
+                    costTotal: parseInt(clean(cells[6])) || 0,
+                    atk: parseInt(clean(cells[8])) || 0, hp: parseInt(clean(cells[9])) || 0,
+                    effect: effect, 
+                    fileName: fName,
+                    searchText: searchText 
+                });
+            }
+            document.getElementById('hand-size').value = CONFIG.defaultHandSize;
+            filterCards();
+        }
+
+        function filterCards() {
+            const getChecked = (id) => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(e => e.value);
+            const getNum = (id, defaultVal) => {
+                const val = document.getElementById(id).value;
+                return val === "" ? defaultVal : parseInt(val);
+            };
+
+            const q = {
+                text: document.getElementById('q-text').value.toLowerCase().trim(),
+                cats: getChecked('grp-cat'),
+                cols: getChecked('grp-col'),
+                rares: getChecked('grp-rare'),
+                cMin: getNum('q-cost-min', 0),
+                cMax: getNum('q-cost-max', CONFIG.defaultCostMax),
+                aMin: getNum('q-atk-min', 0),
+                aMax: getNum('q-atk-max', CONFIG.defaultStatMax),
+                hMin: getNum('q-hp-min', 0),
+                hMax: getNum('q-hp-max', CONFIG.defaultStatMax)
+            };
+
+            let filtered = MASTER_DB.filter(c => {
+                if (!c.searchText.includes(q.text)) return false;
+                if (q.cats.length > 0 && !q.cats.some(cat => c.category.includes(cat))) return false;
+                if (q.cols.length > 0 && !q.cols.some(col => c.color.includes(col))) return false;
+                if (q.rares.length > 0 && !q.rares.some(r => c.rarity === r)) return false;
+                if (c.costTotal < q.cMin || c.costTotal > q.cMax) return false;
+                if (c.atk < q.aMin || c.atk > q.aMax) return false;
+                if (c.hp < q.hMin || c.hp > q.hMax) return false;
+                return true;
+            });
+
+            const sortKey = document.getElementById('q-sort-key').value;
+            const sortDir = parseInt(document.getElementById('q-sort-dir').value);
+
+            filtered.sort((a, b) => {
+                if (sortKey === 'name') {
+                    const valA = a.reading || a.name;
+                    const valB = b.reading || b.name;
+                    return String(valA).localeCompare(String(valB), 'ja') * sortDir;
+                }
+                const valA = a[sortKey] || 0;
+                const valB = b[sortKey] || 0;
+                return (valA - valB) * sortDir;
+            });
+
+            renderResults(filtered);
+        }
+
+        function formatEffect(text) {
+            if (!text) return "";
+            let normalized = text.replace(/（/g, '(').replace(/）/g, ')');
+            return normalized.replace(/\(([^)]{1,15})\)/g, (match, content) => {
+                const cleanContent = content.trim();
+                return `<img src="images/icons/${cleanContent}.png" class="inline-icon" alt="${match}" onerror="this.style.display='none';this.insertAdjacentText('afterend','${match}')">`;
+            });
+        }
+
+        function renderResults(list) {
+            const area = document.getElementById('search-results');
+            area.innerHTML = '';
+            list.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'card-row';
+                
+                const effectHtml = formatEffect(c.effect);
+                const effectPart = effectHtml 
+                    ? `<div class="card-effect">${effectHtml}</div>` 
+                    : ""; 
+
+                let infoParts = [];
+                let statHtml = "";
+                let hasStat = false;
+                if ((c.category && c.category.includes("ユニット")) || c.atk > 0 || c.hp > 0) {
+                     statHtml = `<span class="stat-emphasis">${c.atk}/${c.hp}</span>`;
+                     hasStat = true;
+                }
+
+                if (c.category) infoParts.push(c.category);
+                if (c.color) infoParts.push(c.color);
+                if (c.type && c.type !== "-" && c.type !== "‐") {
+                    infoParts.push(c.type);
+                }
+                
+                let subInfoHtml = "";
+                if (hasStat) {
+                    subInfoHtml = statHtml;
+                    if (infoParts.length > 0) {
+                        subInfoHtml += " | " + infoParts.join(" | ");
+                    }
+                } else {
+                    subInfoHtml = infoParts.join(" | ");
+                }
+
+                div.innerHTML = `
+                    <div class="img-box" onclick="addToDeck('${c.name.replace(/'/g, "\\'")}')">
+                        <img src="images/${c.fileName}" onerror="this.src='https://via.placeholder.com/50x70?text=NoImg'">
+                    </div>
+                    <div class="card-info">
+                        <div class="info-header">
+                            <span class="card-name">${c.name}</span>
+                            <span class="card-sub">${subInfoHtml}</span>
+                        </div>
+                        ${effectPart}
+                    </div>
+                    <button class="btn btn-green btn-add" onclick="addToDeck('${c.name.replace(/'/g, "\\'")}')">+</button>
+                `;
+                enablePreview(div.querySelector('.img-box img'), `images/${c.fileName}`);
+                area.appendChild(div);
+            });
+        }
+
+        function addToDeck(name) {
+            const master = MASTER_DB.find(d => d.name === name);
+            const inDeck = myDeck.find(d => d.name === name);
+            if (inDeck) {
+                if (inDeck.count >= CONFIG.maxCardsInDeck) return;
+                inDeck.count++;
+            } else {
+                myDeck.push({...master, count: 1});
+            }
+            myDeck.sort((a,b) => a.id - b.id);
+            renderDeck();
+        }
+
+        function renderDeck() {
+            const area = document.getElementById('deck-list');
+            area.innerHTML = '';
+            let total = 0;
+            myDeck.forEach(d => {
+                total += d.count;
+                const div = document.createElement('div');
+                div.className = 'deck-item';
+                div.innerHTML = `
+                    <div class="badge">${d.count}</div>
+                    <img src="images/${d.fileName}" 
+                         onclick="addToDeck('${d.name.replace(/'/g, "\\'")}')" 
+                         oncontextmenu="event.preventDefault(); removeFromDeck('${d.name.replace(/'/g, "\\'")}')">
+                `;
+                enablePreview(div.querySelector('img'), `images/${d.fileName}`);
+                area.appendChild(div);
+            });
+            document.getElementById('total-count').textContent = total;
+        }
+
+        function removeFromDeck(name) {
+            const inDeck = myDeck.find(d => d.name === name);
+            if (inDeck) {
+                inDeck.count--;
+                if (inDeck.count <= 0) myDeck = myDeck.filter(d => d.name !== name);
+            }
+            renderDeck();
+        }
+
+        function switchToMulligan() { document.getElementById('screen-builder').classList.remove('active'); document.getElementById('screen-mulligan').classList.add('active'); document.getElementById('manual-input').value = myDeck.map(d => `${d.name} x${d.count}`).join("\n"); }
+        function switchToBuilder() { document.getElementById('screen-mulligan').classList.remove('active'); document.getElementById('screen-builder').classList.add('active'); }
+        
+        function applyManualList() {
+            const input = document.getElementById('manual-input').value; myDeck = [];
+            input.split("\n").forEach(line => {
+                let match = line.match(/^(.+?)\s*[x×*]\s*(\d+)$/);
+                let name = match ? match[1].trim() : line.trim(); let count = match ? parseInt(match[2]) : 1;
+                let master = MASTER_DB.find(m => m.name === name);
+                if (master) myDeck.push({...master, count: Math.min(count, CONFIG.maxCardsInDeck)});
+            });
+            renderDeck();
+        }
+        function handleRecipeUpload(e) { const file=e.target.files[0]; const reader=new FileReader(); reader.onload=(ev)=>{ document.getElementById('manual-input').value=ev.target.result; applyManualList(); }; reader.readAsText(file); }
+        
+        function initSim() {
+            simDeck = []; myDeck.forEach(card => { for (let i = 0; i < card.count; i++) simDeck.push({...card}); });
+            if (simDeck.length < 1) return alert("デッキが空です");
+            for (let i = simDeck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [simDeck[i], simDeck[j]] = [simDeck[j], simDeck[i]]; }
+            document.getElementById('play-area').innerHTML = '';
+            const hSize = parseInt(document.getElementById('hand-size').value);
+            for (let i = 0; i < hSize; i++) drawOne();
+            updateSimCount();
+        }
+        function drawOne() {
+            if (simDeck.length === 0) return; const card = simDeck.pop();
+            const img = document.createElement('img'); img.src = `images/${card.fileName}`; img.className = 'play-card';
+            enablePreview(img, `images/${card.fileName}`); img.onclick = () => img.remove();
+            document.getElementById('play-area').appendChild(img); updateSimCount();
+        }
+        function updateSimCount() { document.getElementById('sim-deck-count').textContent = simDeck.length; }
+        function copyRecipe() { let txt = myDeck.map(d => `${d.name} x${d.count}`).join("\n"); navigator.clipboard.writeText(txt).then(() => alert("コピーしました！")); }
+    </script>
+</body>
+</html>
