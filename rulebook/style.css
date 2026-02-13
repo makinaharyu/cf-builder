@@ -35,8 +35,12 @@ body {
     z-index: 1000;
     transition: transform 0.3s ease;
     flex-shrink: 0;
-    /* 修正：PCでも枠自体はスクロールさせない */
     overflow: hidden; 
+}
+
+/* PCでは閉じるボタンエリアは非表示 */
+.mobile-sidebar-header {
+    display: none;
 }
 
 /* サイドバーの中身だけスクロールさせる */
@@ -286,18 +290,33 @@ nav a:hover {
         width: 280px;
         transform: translateX(-100%);
         box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-        /* 修正：ボタンを内側に入れるため visible は不要 */
-        /* overflow: hidden; (PCの設定を継承) */
+        /* 内部要素を縦に並べる */
+        display: flex;
+        flex-direction: column;
+        z-index: 1001; /* ヘッダーより上に来るように */
     }
 
     .sidebar.active {
         transform: translateX(0);
     }
 
+    /* ★追加：スマホ用サイドバーヘッダー（ボタン置き場） */
+    .mobile-sidebar-header {
+        display: flex;
+        justify-content: flex-end; /* 右寄せ */
+        align-items: center;
+        width: 100%;
+        padding: 5px 10px;
+        box-sizing: border-box;
+        flex-shrink: 0; /* 縮ませない */
+        /* ボタンと下のコンテンツが被らないように高さを確保 */
+        min-height: 40px; 
+    }
+
     /* 内部のスクロールエリア */
     .sidebar-scroll-area {
         padding-bottom: 80px; /* 下部余白 */
-        padding-top: 10px; /* ボタンとの間隔 */
+        padding-top: 0; /* ヘッダーがあるので上は詰めなくて良い */
     }
 
     .logo {
@@ -307,16 +326,13 @@ nav a:hover {
     /* 閉じるボタン（スタイル修正） */
     .close-btn {
         display: block;
-        /* absolute配置をやめ、Flexボックス内で配置する */
-        position: static; 
-        align-self: flex-end; /* 右寄せ */
         background: transparent;
         border: none;
         color: var(--accent-color);
-        font-size: 2rem;
+        font-size: 2.2rem; /* 少し大きくして押しやすく */
         cursor: pointer;
-        padding: 10px 20px;
-        flex-shrink: 0; /* 潰れないようにする */
+        padding: 5px 10px;
+        line-height: 1;
     }
 
     .overlay {
