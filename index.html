@@ -221,6 +221,9 @@
             gap: 6px;
             background-color: rgba(255, 255, 255, 0.05);
             border: 1px solid #444;
+            /* ★修正：スマホで2行にならないようにする */
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         
         .nav-links a:hover {
@@ -794,5 +797,3 @@
     </script>
 </body>
 </html>
-
-
