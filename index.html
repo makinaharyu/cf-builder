@@ -661,11 +661,10 @@
                     // A. まずカード自体が多色でなければならない
                     if (!isCardMulti) return false;
                     
-                    // B. 他の色（赤など）もアクティブな場合、その色の「いずれか」を含んでいる必要がある
-                    // 例: 「赤」「多」選択 -> 赤を含む多色
-                    // 例: 「赤」「緑」「多」選択 -> 赤または緑を含む多色
+                    // B. 他の色（赤など）もアクティブな場合、その色「全て」を含んでいる必要がある
+                    // 修正点：some ➔ every に変更し、AND検索化
                     if (reqSpecificColors.length > 0) {
-                        if (!reqSpecificColors.some(col => c.color.includes(col))) return false;
+                        if (!reqSpecificColors.every(col => c.color.includes(col))) return false;
                     }
                     // 他に色が選択されていなければ、すべての多色を表示（何もしない）
                 } else {
